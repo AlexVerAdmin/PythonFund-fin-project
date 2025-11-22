@@ -119,6 +119,9 @@ def print_actors(actors, film_title=None):
         print("Актёры не найдены.")
         return
     for a in actors:
-        print(f"- {a.get('first_name')} {a.get('last_name')}")
+        # Печатаем имена в верхнем регистре для единообразного отображения
+        fn = (a.get('first_name') or '').strip().upper()
+        ln = (a.get('last_name') or '').strip().upper()
+        print(f"- {fn} {ln}")
     print(f"\nВсего актёров: {len(actors)}")
 
