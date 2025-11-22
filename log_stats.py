@@ -6,7 +6,7 @@ def get_top_queries(limit=5):
     pipeline = [
         {
             "$group": {
-                "_id": {"type": "$search_type", "params": "$user_params"},
+                "_id": {"type": "$search_type", "params": "$params"},
                 "count": {"$sum": 1},
                 "last": {"$max": "$timestamp"},
             }
@@ -28,18 +28,3 @@ def clear_logs():
     """
     result = coll.delete_many({})
     return result.deleted_count
-
-
-def _format_agg_item(item):
-    """Вспомогательная функция для форматирования агрегированных записей.
-
-    Используется в `formatter.print_stats` при необходимости; оставлена
-    для локального форматирования результатов агрегирования.
-    """
-    _id = item.get("_id", {})
-    return {
-        "type": _id.get("type"),
-        "params": _id.get("params"),
-        "count": item.get("count"),
-        "last": item.get("last"),
-    }

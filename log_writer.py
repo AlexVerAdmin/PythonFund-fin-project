@@ -3,32 +3,45 @@ from datetime import datetime, timezone
 from mongo_client import coll
 
 
+def _clean_params(params):
+    """Подготовить объект `params` для сохранения в логе.
+
+    Убираем технические поля, не влияющие на смысл запроса (например, `offset`).
+    Возвращаем копию словаря с допустимыми ключами или оригинал, если не словарь.
+    """
+    if not isinstance(params, dict):
+        return params
+    p = dict(params)
+    p.pop("offset", None)
+    return p
+
+
 def log_search(search_type, params, results_count):
     """Записать информацию о поисковом запросе в MongoDB.
 
-    Сохраняются исходные `params` и очищённые `user_params`, из которых
-    убираются временные поля (например, `offset`) — это нужно, чтобы
-    похожие по смыслу запросы группировались в статистике.
+    Формат документа в Mongo должен быть:
+    {
+      "timestamp": "YYYY-MM-DDTHH:MM:SS",
+      "search_type": "keyword",
+      "params": { ... },
+      "results_count": 3
+    }
 
-    `timestamp` хранится как объект `datetime` (UTC) для корректной сортировки.
+    `timestamp` сохраняется в виде строки ISO (без микросекунд и смещения).
     """
-    # Подготовка параметров для группировки (убираем пагинацию)
-    user_params = None
     try:
-        if isinstance(params, dict):
-            user_params = dict(params)
-            user_params.pop("offset", None)
-        else:
-            user_params = params
+        params_clean = _clean_params(params)
     except Exception:
-        # Если копирование упало, сохраняем оригинал
-        user_params = params
+        params_clean = params
+
+    # Форматируем timestamp как строку ISO без микросекунд
+    ts = datetime.now(timezone.utc).astimezone(timezone.utc).replace(microsecond=0)
+    ts_str = ts.strftime("%Y-%m-%dT%H:%M:%S")
 
     doc = {
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": ts_str,
         "search_type": search_type,
-        "params": params,
-        "user_params": user_params,
+        "params": params_clean,
         "results_count": results_count,
     }
 
