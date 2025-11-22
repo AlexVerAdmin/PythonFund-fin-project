@@ -140,9 +140,12 @@ def handle_keyword_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
-        # После показа страницы — позволяем пользователю выбрать фильм для просмотра актёров
-        choice = input("Введите номер фильма для просмотра актёров (или Enter чтобы продолжить): ").strip()
-        if choice:
+        # После показа страницы — позволяеm выбрать один или несколько фильмов подряд
+        # Пользователь может ввести номер фильма несколько раз; пустой ввод — перейти к пагинации
+        while True:
+            choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
+            if not choice:
+                break
             try:
                 idx = int(choice)
                 # индекс в returned `films` вычисляется относительно offset
@@ -243,9 +246,11 @@ def handle_genre_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
-        # Выбор фильма для просмотра актёров на текущей странице
-        choice = input("Введите номер фильма для просмотра актёров (или Enter чтобы продолжить): ").strip()
-        if choice:
+        # После показа страницы — позволяем выбрать несколько фильмов подряд для просмотра актёров
+        while True:
+            choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
+            if not choice:
+                break
             try:
                 idx = int(choice)
                 if idx >= offset + 1 and idx <= offset + len(films):
