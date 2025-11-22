@@ -107,3 +107,18 @@ def print_stats(top_queries, last_queries):
     for q in last_queries:
         print(f"- {q.get('timestamp')}: {q.get('search_type')} {q.get('params')} -> {q.get('results_count')}")
 
+
+def print_actors(actors, film_title=None):
+    """Печать списка актёров для выбранного фильма.
+
+    `actors` — список словарей с ключами `actor_id`, `first_name`, `last_name`.
+    """
+    if film_title:
+        print(f"\nАктёры фильма: {film_title}\n")
+    if not actors:
+        print("Актёры не найдены.")
+        return
+    for a in actors:
+        print(f"- {a.get('first_name')} {a.get('last_name')}")
+    print(f"\nВсего актёров: {len(actors)}")
+

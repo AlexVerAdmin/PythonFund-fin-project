@@ -18,6 +18,7 @@ from mysql_connector import (
     get_year_bounds,
     get_keyword_count,
     get_genre_year_count,
+    get_actors_by_film,
     get_ratings,
 )
 from log_writer import log_search
@@ -27,6 +28,7 @@ from formatter import (
     print_genres,
     print_year_bounds,
     print_stats,
+    print_actors,
     SEPARATOR,
 )
 from config import LIMIT
@@ -138,6 +140,21 @@ def handle_keyword_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
+        # После показа страницы — позволяем пользователю выбрать фильм для просмотра актёров
+        choice = input("Введите номер фильма для просмотра актёров (или Enter чтобы продолжить): ").strip()
+        if choice:
+            try:
+                idx = int(choice)
+                # индекс в returned `films` вычисляется относительно offset
+                if idx >= offset + 1 and idx <= offset + len(films):
+                    film = films[idx - offset - 1]
+                    actors = get_actors_by_film(film.get("film_id"))
+                    print_actors(actors, film_title=film.get("title"))
+                else:
+                    print(f"Неверный номер — введите число от {offset + 1} до {offset + len(films)}")
+            except ValueError:
+                print("Ожидался номер фильма.")
+
         if len(films) < LIMIT:
             break
         if not _ask_yes("Показать следующие 10 результатов? (y/n): "):
@@ -226,6 +243,20 @@ def handle_genre_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
+        # Выбор фильма для просмотра актёров на текущей странице
+        choice = input("Введите номер фильма для просмотра актёров (или Enter чтобы продолжить): ").strip()
+        if choice:
+            try:
+                idx = int(choice)
+                if idx >= offset + 1 and idx <= offset + len(films):
+                    film = films[idx - offset - 1]
+                    actors = get_actors_by_film(film.get("film_id"))
+                    print_actors(actors, film_title=film.get("title"))
+                else:
+                    print(f"Неверный номер — введите число от {offset + 1} до {offset + len(films)}")
+            except ValueError:
+                print("Ожидался номер фильма.")
+
         if len(films) < LIMIT:
             break
         if not _ask_yes("Показать следующие 10 результатов? (y/n): "):

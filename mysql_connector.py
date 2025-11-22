@@ -205,3 +205,21 @@ def get_genre_year_count(genre_id, year_min, year_max, rating=None):
             return int(row.get("cnt", 0))
 
 
+def get_actors_by_film(film_id):
+    """Вернуть список актёров (actor_id, first_name, last_name) для фильма по `film_id`.
+
+    Результат — список словарей, упорядоченных по фамилии, затем по имени.
+    """
+    query = (
+        "SELECT a.actor_id, a.first_name, a.last_name "
+        "FROM actor a "
+        "JOIN film_actor fa ON a.actor_id = fa.actor_id "
+        "WHERE fa.film_id = %s "
+        "ORDER BY a.last_name, a.first_name"
+    )
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query, (int(film_id),))
+            return cursor.fetchall()
+
+
