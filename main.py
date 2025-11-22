@@ -140,11 +140,18 @@ def handle_keyword_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
+        # Если это последняя страница (меньше LIMIT) — не показываем приглашение
+        # для выбора актёров; сразу возвращаемся в меню.
+        if len(films) < LIMIT:
+            break
+
         # После показа страницы — позволяеm выбрать один или несколько фильмов подряд
-        # Пользователь может ввести номер фильма несколько раз; пустой ввод — перейти к пагинации
+        # Если пользователь сразу нажимает Enter (пустой ввод) — автоматически переходим к следующей странице.
+        user_pressed_enter = False
         while True:
             choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
             if not choice:
+                user_pressed_enter = True
                 break
             try:
                 idx = int(choice)
@@ -158,8 +165,10 @@ def handle_keyword_search():
             except ValueError:
                 print("Ожидался номер фильма.")
 
-        if len(films) < LIMIT:
-            break
+        if user_pressed_enter:
+            # Пользователь нажал Enter — сразу перейти к следующей странице
+            offset += LIMIT
+            continue
         if not _ask_yes("Показать следующие 10 результатов? (y/n): "):
             break
         offset += LIMIT
@@ -246,10 +255,18 @@ def handle_genre_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
+        # Если это последняя страница (меньше LIMIT) — не показываем приглашение
+        # для выбора актёров; сразу возвращаемся в меню.
+        if len(films) < LIMIT:
+            break
+
         # После показа страницы — позволяем выбрать несколько фильмов подряд для просмотра актёров
+        # Если пользователь сразу нажимает Enter (пустой ввод) — автоматически переходим к следующей странице.
+        user_pressed_enter = False
         while True:
             choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
             if not choice:
+                user_pressed_enter = True
                 break
             try:
                 idx = int(choice)
@@ -262,8 +279,9 @@ def handle_genre_search():
             except ValueError:
                 print("Ожидался номер фильма.")
 
-        if len(films) < LIMIT:
-            break
+        if user_pressed_enter:
+            offset += LIMIT
+            continue
         if not _ask_yes("Показать следующие 10 результатов? (y/n): "):
             break
         offset += LIMIT
