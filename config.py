@@ -1,40 +1,41 @@
-"""Значения конфигурации, загружаемые из переменных окружения.
+"""Параметры конфигурации, загружаемые из переменных окружения.
 
-Секреты (пароли, логины, URI) читаются из переменных окружения. Для
-локальной разработки можно создать файл `.env` и поместить туда нужные
-переменные — этот файл не должен попадать в репозиторий с реальными
-секретами. В проекте есть пример `.env.example` с перечнем переменных.
+Секреты (пароли, логины, URI) читаются из переменных окружения.
 """
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Загружаем .env из директории рядом с этим файлом (удобство для разработки).
-# Явный путь предотвращает проблемы, когда процесс запускается из другой
-# рабочей директории.
+# Загружаем .env из директории рядом с этим файлом.
+
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
 # Параметры подключения к MySQL
-MYSQL_HOST = os.getenv("MYSQL_HOST", "ich-db.edu.itcareerhub.de")
-MYSQL_USER = os.getenv("MYSQL_USER", "ich1")
-# По соображениям безопасности по умолчанию пароль пуст — не храните
-# реальные пароли в репозитории
-MYSQL_PASS = os.getenv("MYSQL_PASS", "")
-MYSQL_DB = os.getenv("MYSQL_DB", "sakila")
+MYSQL_HOST = os.getenv("MYSQL_HOST")
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASS = os.getenv("MYSQL_PASS")
+MYSQL_DB = os.getenv("MYSQL_DB")
 
 # Части для формирования строки подключения к MongoDB. URI собирается
-# кодом, который использует эти переменные; убедитесь, что `MONGO_USER`
-# и `MONGO_PASS` заданы в окружении при необходимости.
-MONGO_URI_PREFIX = os.getenv("MONGO_URI_PREFIX", "mongodb+srv://")
-MONGO_URI_SUFFIX = os.getenv("MONGO_URI_SUFFIX", "@cluster0.ycgtzbd.mongodb.net/")
-MONGO_USER = os.getenv("MONGO_USER", "")
-MONGO_PASS = os.getenv("MONGO_PASS", "")
-MONGO_DB = os.getenv("MONGO_DB", "movie_logs")
-MONGO_COLL = os.getenv("MONGO_COLL", "final_project_dam130625_alexver")
-
+# кодом, который использует эти переменные
+MONGO_URI_PREFIX = os.getenv("MONGO_URI_PREFIX")
+MONGO_URI_SUFFIX = os.getenv("MONGO_URI_SUFFIX")
+MONGO_USER = os.getenv("MONGO_USER")
+MONGO_PASS = os.getenv("MONGO_PASS")
+MONGO_DB = os.getenv("MONGO_DB")
+MONGO_COLL = os.getenv("MONGO_COLL")
 # Параметры приложения по умолчанию
-LIMIT = int(os.getenv("LIMIT", "10"))
+LIMIT = int(os.getenv("LIMIT"))
 
 # Настраиваемый порядок рейтингов (от мягкого к строгому).
-RATING_ORDER = list("G,PG,PG-13,R,NC-17") 
+RATING_ORDER = ["G","PG","PG-13","R","NC-17"] 
+
+# Описания рейтингов на русском языке. Ключи — коды рейтингов в БД.
+RATING_DESCRIPTIONS = {
+	"G": "Для всей аудитории",
+	"PG": "Рекомендуется родительский контроль",
+	"PG-13": "Для зрителей старше 13 лет; родительский контроль рекомендуется",
+	"R": "Только для взрослой аудитории; возрастное ограничение 17+",
+	"NC-17": "Строго 18+; не предназначено для детей",
+}

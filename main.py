@@ -31,7 +31,7 @@ from formatter import (
     print_actors,
     SEPARATOR,
 )
-from config import LIMIT
+from config import LIMIT, RATING_DESCRIPTIONS
 
 
 def _ask_yes(prompt):
@@ -94,7 +94,8 @@ def handle_keyword_search():
         if ratings:
             print("Доступные рейтинги:")
             for i, r in enumerate(ratings, 1):
-                print(f"{i}. {r}")
+                desc = RATING_DESCRIPTIONS.get(r, "(описание отсутствует)")
+                print(f"{i}. {r} — {desc}")
             r_choice = input("Выберите номер рейтинга (или Enter для пропуска): ").strip()
             if r_choice:
                 ri = int(r_choice)
@@ -216,7 +217,8 @@ def handle_genre_search():
         if ratings:
             print("Доступные рейтинги:")
             for i, r in enumerate(ratings, 1):
-                print(f"{i}. {r}")
+                desc = RATING_DESCRIPTIONS.get(r, "(описание отсутствует)")
+                print(f"{i}. {r} — {desc}")
             r_choice = input("Выберите номер рейтинга (или Enter для пропуска): ").strip()
             if r_choice:
                 ri = int(r_choice)
