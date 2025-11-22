@@ -41,8 +41,8 @@ MONGO_URI=mongodb://user:pass@localhost:27017
 MONGO_DB=python_films
 MONGO_COLLECTION=search_logs
 
-# Порядок рейтингов (через запятую) — от "жёсткого" к "мягкому"
-RATINGS_ORDER=NC-17,R,PG-13,PG,G
+# Порядок рейтингов задаётся в `config.py` как список `RATING_ORDER`.
+# Если нужно изменить порядок — отредактируйте `config.py`.
 ```
 
 Примечания:
