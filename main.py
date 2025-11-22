@@ -26,7 +26,6 @@ from log_stats import get_top_queries, get_last_queries, clear_logs
 from formatter import (
     print_movies_table,
     print_genres,
-    print_year_bounds,
     print_stats,
     print_actors,
     SEPARATOR,
@@ -73,7 +72,7 @@ def handle_keyword_search():
     year_min = year_max = None
     try:
         min_year, max_year = get_year_bounds()
-        print_year_bounds(min_year, max_year)
+        print(f"Доступные годы: {min_year} — {max_year}")
         lower = input(f"Нижний год (Enter для {min_year}): ").strip()
         upper = input(f"Верхний год (Enter для {max_year}): ").strip()
         if lower or upper:
@@ -141,13 +140,9 @@ def handle_keyword_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
-        # Если это последняя страница (меньше LIMIT) — не показываем приглашение
-        # для выбора актёров; сразу возвращаемся в меню.
-        if len(films) < LIMIT:
-            break
-
         # После показа страницы — позволяеm выбрать один или несколько фильмов подряд
-        # Если пользователь сразу нажимает Enter (пустой ввод) — автоматически переходим к следующей странице.
+        # Если пользователь сразу нажимает Enter (пустой ввод) — переходим дальше.
+        # На последней странице выбор также доступен, но после него мы вернёмся в меню.
         user_pressed_enter = False
         while True:
             choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
@@ -166,8 +161,11 @@ def handle_keyword_search():
             except ValueError:
                 print("Ожидался номер фильма.")
 
+        # Если это была последняя страница, не спрашиваем про следующую — возвращаемся в меню
+        if len(films) < LIMIT:
+            break
         if user_pressed_enter:
-            # Пользователь нажал Enter — сразу перейти к следующей странице
+            # Пользователь нажал Enter — перейти к следующей странице
             offset += LIMIT
             continue
         if not _ask_yes("Показать следующие 10 результатов? (y/n): "):
@@ -197,7 +195,7 @@ def handle_genre_search():
         return
     genre = genres[idx - 1]
     min_year, max_year = get_year_bounds()
-    print_year_bounds(min_year, max_year)
+    print(f"Доступные годы: {min_year} — {max_year}")
     lower = input(f"Нижний год (или Enter для {min_year}): ").strip()
     upper = input(f"Верхний год (или Enter для {max_year}): ").strip()
     try:
@@ -257,13 +255,9 @@ def handle_genre_search():
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
-        # Если это последняя страница (меньше LIMIT) — не показываем приглашение
-        # для выбора актёров; сразу возвращаемся в меню.
-        if len(films) < LIMIT:
-            break
-
         # После показа страницы — позволяем выбрать несколько фильмов подряд для просмотра актёров
-        # Если пользователь сразу нажимает Enter (пустой ввод) — автоматически переходим к следующей странице.
+        # Если пользователь сразу нажимает Enter (пустой ввод) — переходим дальше.
+        # На последней странице выбор также доступен, но после него мы вернёмся в меню.
         user_pressed_enter = False
         while True:
             choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
@@ -281,6 +275,9 @@ def handle_genre_search():
             except ValueError:
                 print("Ожидался номер фильма.")
 
+        # Если это была последняя страница, не спрашиваем про следующую — возвращаемся в меню
+        if len(films) < LIMIT:
+            break
         if user_pressed_enter:
             offset += LIMIT
             continue
