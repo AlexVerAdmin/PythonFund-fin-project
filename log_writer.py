@@ -1,41 +1,23 @@
 # === log_writer.py ===
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from mongo_client import coll
 
 
-def _clean_params(params):
-    """Подготовить объект `params` для сохранения в логе.
-
-    Убираем технические поля, не влияющие на смысл запроса (например, `offset`).
-    Возвращаем копию словаря с допустимыми ключами или оригинал, если не словарь.
-    """
-    if not isinstance(params, dict):
-        return params
-    p = dict(params)
-    p.pop("offset", None)
-    return p
-
-
 def log_search(search_type, params, results_count):
-    """Записать информацию о поисковом запросе в MongoDB.
-
-    Формат документа в Mongo должен быть:
-    {
-      "timestamp": "YYYY-MM-DDTHH:MM:SS",
-      "search_type": "keyword",
-      "params": { ... },
-      "results_count": 3
-    }
-
-    `timestamp` сохраняется в виде строки ISO (без микросекунд и смещения).
+    """Записывает информацию о поисковом запросе в MongoDB.
     """
     try:
-        params_clean = _clean_params(params)
+        if isinstance(params, dict):
+            params_clean = dict(params)
+            params_clean.pop("offset", None)
+        else:
+            params_clean = params
     except Exception:
         params_clean = params
 
-    # Форматируем timestamp как строку ISO без микросекунд
-    ts = datetime.now(timezone.utc).astimezone(timezone.utc).replace(microsecond=0)
+   
+    ts = datetime.now(ZoneInfo("Europe/Berlin")).replace(microsecond=0)
     ts_str = ts.strftime("%Y-%m-%dT%H:%M:%S")
 
     doc = {
@@ -44,6 +26,11 @@ def log_search(search_type, params, results_count):
         "params": params_clean,
         "results_count": results_count,
     }
+    # Если Mongo не доступен — пропускаем логирование и информируем
+    if not coll:
+        # Одноразовое информирование оставим на усмотрение: здесь выводим краткое сообщение
+        print("Инфо: MongoDB недоступна — пропускаю логирование.")
+        return
 
-    # Вставка документа в общую коллекцию (в mongo_client.coll)
+    # Вставка документа в общую коллекцию
     coll.insert_one(doc)

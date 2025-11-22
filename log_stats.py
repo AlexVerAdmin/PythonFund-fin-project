@@ -3,6 +3,9 @@ from mongo_client import coll
 
 
 def get_top_queries(limit=5):
+    if not coll:
+        return []
+
     pipeline = [
         {
             "$group": {
@@ -18,6 +21,8 @@ def get_top_queries(limit=5):
 
 
 def get_last_queries(limit=5):
+    if not coll:
+        return []
     return list(coll.find().sort("timestamp", -1).limit(limit))
 
 
@@ -26,5 +31,7 @@ def clear_logs():
     Удаляет все документы с логами поисковых запросов из коллекции.
     Возвращает число удалённых документов.
     """
+    if not coll:
+        return 0
     result = coll.delete_many({})
     return result.deleted_count
