@@ -27,7 +27,7 @@ def log_search(search_type, params, results_count):
         "results_count": results_count,
     }
     # Если Mongo не доступен — пропускаем логирование и информируем
-    if not coll:
+    if coll is None:
         # Одноразовое информирование оставим на усмотрение: здесь выводим краткое сообщение
         print("Инфо: MongoDB недоступна — пропускаю логирование.")
         return

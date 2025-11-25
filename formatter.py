@@ -1,127 +1,173 @@
-"""Хелперы форматирования для консольного вывода.
-
+"""
 Здесь собраны функции вывода результатов поиска, списков жанров,
-диапазонов лет и статистики. Функции ориентированы на удобное чтение в
-терминале; при необходимости их можно заменить на более богатую табличную
-печать (например, с помощью `tabulate`).
+диапазонов лет и статистики. 
 """
 
 
 # Визуальный разделитель, печатаемый после блока результатов
 SEPARATOR = "*" * 100
 
-
-def _truncate(text, length=120):
-    """Усечь `text` до `length` символов, добавив '...' при необходимости."""
-    if text is None:
-        return ""
-    text = str(text)
-    return text if len(text) <= length else text[: length - 3] + "..."
-
-
-def _fmt_money(x):
-    """Format numeric money-like value to two decimals or return 'N/A'."""
-    if x is None:
-        return "N/A"
-    try:
-        return f"{float(x):.2f}"
-    except Exception:
-        return str(x)
-
-
-
-
+from config import RATING_DESCRIPTIONS
 
 def print_movies_table(films, offset=0, total=None, show_header=True):
-    """Вывести список фильмов с нумерацией начиная от `offset + 1`.
-
-    Если передан `total`, в шапке отображается диапазон и общее число,
-    например: "Показаны 1–10 из 42".
-    Каждый фильм выводится в формате: `1. Название (Год)` и краткое
-    описание на следующей строке (усечённое через `_truncate`).
+    """
+    Выводит список фильмов в читаемом табличном формате.
     """
     if not films:
-        print("Фильмы не найдены")
+        print("\n  ℹ️  Фильмы не найдены\n")
         return
-    # Заголовок с информацией о диапазоне и общим количеством
+   
     if show_header:
+        print("\n" + "=" * 100)
         if total is not None:
             start = offset + 1
             end = offset + len(films)
-            print(f"=== Результаты (Показаны {start}–{end} из {total}) ===")
+            print(f"🎬 РЕЗУЛЬТАТЫ ПОИСКА (Показаны {start}–{end} из {total})".center(100))
         else:
-            print("=== Результаты ===")
+            print("🎬 РЕЗУЛЬТАТЫ ПОИСКА".center(100))
+        print("=" * 100)
 
     for i, film in enumerate(films, start=offset + 1):
-        title = film.get("title")
-        year = film.get("release_year")
-        rental = film.get("rental_rate")
-        replacement = film.get("replacement_cost")
-        desc_raw = film.get("description")
-        desc = _truncate(desc_raw, 120)
-        rental_s = _fmt_money(rental)
-        replacement_s = _fmt_money(replacement)
-        print(f"{i}. {title} ({year}) — аренда: {rental_s}, покупка: {replacement_s}")
+        title = film.get("title", "Без названия")
+        year = film.get("release_year", "N/A")
+        ren_raw = film.get("rental_rate")
+        rep_raw = film.get("replacement_cost")
+        # Инлайновое форматирование денежных значений (без вспомогательной функции)
+        try:
+            ren = f"{float(ren_raw):.2f}" if ren_raw is not None else "N/A"
+        except Exception:
+            ren = str(ren_raw) if ren_raw is not None else "N/A"
+        try:
+            rep = f"{float(rep_raw):.2f}" if rep_raw is not None else "N/A"
+        except Exception:
+            rep = str(rep_raw) if rep_raw is not None else "N/A"
+        rating = film.get("rating", "N/A")
+        # Подставляем описание рейтинга из конфига; если описания нет — оставляем код
+        rating_desc = RATING_DESCRIPTIONS.get(rating, rating)
+        desc = film.get("description") or ""
+        
+        # Форматируем вывод с разделителем между фильмами
+        print(f"\n  {i}. 📽️  {title} ({year})")
+        print(f"      💰 Аренда: ${ren} | Покупка: ${rep}")
+        print(f"      ⭐ Рейтинг: {rating_desc}")
         if desc:
-            print(f"    {desc}")
-    # Разделитель печатается вызывающей стороной после вывода страницы
-
+            # Ограничиваем длину описания для лучшей читаемости
+            desc_lines = desc[:200] + "..." if len(desc) > 200 else desc
+            print(f"      📝 {desc_lines}")
+    
 
 def print_genres(genres):
-    """Вывести список жанров с индексами для выбора пользователем.
-
-    Ожидаемый формат: `1. НазваниеЖанра (id: category_id)`.
+    """
+    Выводит список жанров с индексами для выбора пользователем.
     """
     if not genres:
-        print("Жанры не найдены в базе.")
+        print("\n  ℹ️  Жанры не найдены в базе.\n")
         return
-    print("=== Жанры ===")
+    
+    print("\n" + "=" * 60)
+    print("🎭 ДОСТУПНЫЕ ЖАНРЫ".center(60))
+    print("=" * 60)
+    
+    # Выводим жанры в две колонки для компактности
     for idx, g in enumerate(genres, start=1):
-        print(f"{idx}. {g.get('name')} (id: {g.get('category_id')})")
+        name = g.get('name', 'Неизвестно')
+        cat_id = g.get('category_id', 'N/A')
+        print(f"  {idx:2d}. {name:<20s} (ID: {cat_id})")
+    print("=" * 60 + "\n")
 
 
-def print_year_bounds(min_year, max_year):
-    """Показать минимальный и максимальный годы релизов, найденные в БД."""
-    print(f"Доступные годы: {min_year} — {max_year}")
+def _format_search_params(params):
+    """
+    Форматирует параметры поиска в читаемую строку.
+    """
+    if not params:
+        return "нет параметров"
+    
+    parts = []
+    if "keyword" in params:
+        parts.append(f"ключевое слово: '{params['keyword']}'")
+    if "genre_id" in params:
+        parts.append(f"жанр ID: {params['genre_id']}")
+    if "year_min" in params and "year_max" in params:
+        parts.append(f"годы: {params['year_min']}–{params['year_max']}")
+    if "rating" in params:
+        parts.append(f"рейтинг: {params['rating']}")
+    
+    return ", ".join(parts) if parts else str(params)
 
 
 def print_stats(top_queries, last_queries):
-    """Вывести статистику популярных и последних запросов из MongoDB.
-
-    `top_queries` ожидается как список агрегированных документов, где
-    `_id` содержит `type` и `params` (мы группируем по `user_params`).
     """
-    print("=== Популярные запросы ===")
+    Выводит статистику популярных и последних запросов из MongoDB.
+    """
+    print("\n" + "=" * 80)
+    print("📊 ПОПУЛЯРНЫЕ ЗАПРОСЫ".center(80))
+    print("=" * 80)
+    
     if not top_queries:
-        print("Статистика недоступна.")
-    for item in top_queries:
-        _id = item.get("_id")
-        count = item.get("count")
-        last = item.get("last")
-        # Печатаем тип запроса и параметры в читабельном виде
-        print(f"- тип={_id.get('type')}, параметры={_id.get('params')} -> кол-во={count}, последний={last}")
-
-    print("=== Недавние запросы ===")
+        print("  Статистика недоступна (нет сохранённых запросов).\n")
+    else:
+        for idx, item in enumerate(top_queries, 1):
+            _id = item.get("_id", {})
+            count = item.get("count", 0)
+            last = item.get("last", "неизвестно")
+            search_type = _id.get("type", "неизвестный тип")
+            params = _id.get("params", {})
+            
+            # Преобразуем тип поиска в читаемый формат
+            type_name = {
+                "keyword": "Поиск по ключевому слову",
+                "genre_year": "Поиск по жанру и годам"
+            }.get(search_type, search_type)
+            
+            print(f"\n  {idx}. {type_name}")
+            print(f"     Параметры: {_format_search_params(params)}")
+            print(f"     Количество запросов: {count}")
+            print(f"     Последний запрос: {last}")
+    
+    print("\n" + "=" * 80)
+    print("🕒 НЕДАВНИЕ ЗАПРОСЫ".center(80))
+    print("=" * 80)
+    
     if not last_queries:
-        print("Недавних запросов нет.")
-    for q in last_queries:
-        print(f"- {q.get('timestamp')}: {q.get('search_type')} {q.get('params')} -> {q.get('results_count')}")
+        print("  Недавних запросов нет.\n")
+    else:
+        for idx, q in enumerate(last_queries, 1):
+            timestamp = q.get("timestamp", "неизвестно")
+            search_type = q.get("search_type", "неизвестный тип")
+            params = q.get("params", {})
+            results_count = q.get("results_count", 0)
+            
+            # Преобразуем тип поиска в читаемый формат
+            type_name = {
+                "keyword": "Поиск по ключевому слову",
+                "genre_year": "Поиск по жанру и годам"
+            }.get(search_type, search_type)
+            
+            print(f"\n  {idx}. [{timestamp}] {type_name}")
+            print(f"     Параметры: {_format_search_params(params)}")
+            print(f"     Найдено результатов: {results_count}")
+    
+    print("=" * 80 + "\n")
 
 
 def print_actors(actors, film_title=None):
-    """Печать списка актёров для выбранного фильма.
-
-    `actors` — список словарей с ключами `actor_id`, `first_name`, `last_name`.
     """
+    Выводит список актёров для выбранного фильма.
+    """
+    print("\n" + "=" * 70)
     if film_title:
-        print(f"\nАктёры фильма: {film_title}\n")
+        print(f"🎭 АКТЁРЫ ФИЛЬМА: {film_title}".center(70))
+    else:
+        print("🎭 СПИСОК АКТЁРОВ".center(70))
+    print("=" * 70)
+    
     if not actors:
-        print("Актёры не найдены.")
-        return
-    for a in actors:
-        # Печатаем имена в верхнем регистре для единообразного отображения
-        fn = (a.get('first_name') or '').strip().upper()
-        ln = (a.get('last_name') or '').strip().upper()
-        print(f"- {fn} {ln}")
-    print(f"\nВсего актёров: {len(actors)}")
-
+        print("\n  ℹ️  Актёры не найдены.\n")
+    else:
+        for idx, a in enumerate(actors, 1):
+            fn = (a.get('first_name') or '').strip().title()
+            ln = (a.get('last_name') or '').strip().title()
+            print(f"  {idx:2d}. {fn} {ln}")
+    
+    print("=" * 70 + "\n")
