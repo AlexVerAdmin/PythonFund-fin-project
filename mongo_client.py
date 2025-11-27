@@ -1,5 +1,5 @@
 """
-Собирает URI и проверяет соединение при инициализации. 
+Собирает URI и проверяет соединение при инициализации.
 """
 
 import os
@@ -27,10 +27,10 @@ if _uri:
         db = client[MONGO_DB]
         coll = db[MONGO_COLL]
     except Exception as exc:
-        print(f"Внимание: не удалось подключиться к MongoDB ({exc}). Логирование отключено.")
+        print(
+            f"Внимание: не удалось подключиться к MongoDB ({exc}). Логирование отключено.")
         client = None
         coll = None
 else:
     print("Инфо: MongoDB URI не задан. Логирование отключено.")
     coll = None
-

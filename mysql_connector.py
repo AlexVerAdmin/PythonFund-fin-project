@@ -49,7 +49,7 @@ def get_genres():
     """Возвращает список жанров (category_id, name)."""
 
     query = "SELECT category_id, name FROM category ORDER BY name"
-    
+
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query)
@@ -66,7 +66,7 @@ def get_ratings():
             cursor.execute(query)
             rows = cursor.fetchall()
             db_ratings = [r.get("rating") for r in rows]
-            
+
             ordered = [r for r in RATING_ORDER if r in db_ratings]
             others = [r for r in db_ratings if r not in ordered]
             return ordered + others
@@ -82,7 +82,14 @@ def get_year_bounds():
             return row.get("min_year"), row.get("max_year")
 
 
-def search_by_keyword(keyword, offset=0, limit=LIMIT, genre_id=None, year_min=None, year_max=None, rating=None):
+def search_by_keyword(
+        keyword,
+        offset=0,
+        limit=LIMIT,
+        genre_id=None,
+        year_min=None,
+        year_max=None,
+        rating=None):
     """Поиск фильмов по ключевому слову с опциональными фильтрами.
 
     Поддерживаются фильтры: `genre_id`, `year_min`/`year_max`, `rating`.
@@ -111,7 +118,9 @@ def search_by_keyword(keyword, offset=0, limit=LIMIT, genre_id=None, year_min=No
 
     where_sql = " AND ".join(where_clauses)
     query = (
-        "SELECT DISTINCT f.film_id, f.title, f.description, f.release_year, f.rating, f.rental_rate, f.replacement_cost "
+        "SELECT DISTINCT f.film_id, f.title, f.description, "
+        "f.release_year, f.rating, f.rental_rate, "
+        "f.replacement_cost "
         "FROM film f "
         f"{join_clause} "
         f"WHERE {where_sql} "
@@ -126,16 +135,23 @@ def search_by_keyword(keyword, offset=0, limit=LIMIT, genre_id=None, year_min=No
             return cursor.fetchall()
 
 
-def search_by_genre_and_year(genre_id, year_min, year_max, offset=0, limit=LIMIT, rating=None):
+def search_by_genre_and_year(
+        genre_id,
+        year_min,
+        year_max,
+        offset=0,
+        limit=LIMIT,
+        rating=None):
     """Поиск фильмов по жанру и диапазону лет с опциональным фильтром `rating`."""
     params = [int(genre_id), int(year_min), int(year_max)]
     query = (
-        "SELECT DISTINCT f.film_id, f.title, f.description, f.release_year, f.rating, f.rental_rate, f.replacement_cost "
+        "SELECT DISTINCT f.film_id, f.title, f.description, "
+        "f.release_year, f.rating, f.rental_rate, "
+        "f.replacement_cost "
         "FROM film f "
         "JOIN film_category fc ON f.film_id = fc.film_id "
         "WHERE fc.category_id = %s "
-        "AND f.release_year BETWEEN %s AND %s "
-    )
+        "AND f.release_year BETWEEN %s AND %s ")
     if rating:
         allowed = get_ratings_lesser_or_equal(rating)
         if allowed:
@@ -152,7 +168,12 @@ def search_by_genre_and_year(genre_id, year_min, year_max, offset=0, limit=LIMIT
             return cursor.fetchall()
 
 
-def get_keyword_count(keyword, genre_id=None, year_min=None, year_max=None, rating=None):
+def get_keyword_count(
+        keyword,
+        genre_id=None,
+        year_min=None,
+        year_max=None,
+        rating=None):
     """Вернуть общее число фильмов, соответствующих ключу и фильтрам."""
     params = []
     where_clauses = ["f.title LIKE %s"]
@@ -255,5 +276,3 @@ def get_films_by_actor_count(actor_id):
             cursor.execute(query, (int(actor_id),))
             row = cursor.fetchone()
             return int(row.get("cnt", 0))
-
-

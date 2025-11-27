@@ -1,0 +1,17 @@
+# Игнорировать всё
+*
+
+# Разрешить сам .gitignore
+!.gitignore
+
+
+# Разрешить файлы конфигурации
+!.env.example
+!config.py
+!formatter.py
+!log_stats.py
+!log_writer.py
+!main.py
+!mongo_client.py
+!mysql_connector.py
+!README.md

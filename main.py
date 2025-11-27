@@ -43,7 +43,7 @@ def _ask_yes(prompt):
 
 def handle_actor_films(actor_id, actor_name):
     """Показать все фильмы с участием выбранного актёра.
-    
+
     Args:
         actor_id: ID актёра в базе данных
         actor_name: Полное имя актёра для отображения
@@ -51,39 +51,45 @@ def handle_actor_films(actor_id, actor_name):
     print("\n" + "=" * 70)
     print(f"{f'🎬 ФИЛЬМЫ С УЧАСТИЕМ: {actor_name}':^70}")
     print("=" * 70 + "\n")
-    
+
     # Получаем общее количество фильмов
     try:
         total = get_films_by_actor_count(actor_id)
         print(f"📊 Всего фильмов с участием актёра: {total}\n")
     except Exception:
         total = None
-    
+
     offset = 0
     while True:
         films = get_films_by_actor(actor_id, offset=offset, limit=LIMIT)
-        
+
         if not films:
             print("\n  ℹ️  Фильмы не найдены\n")
             break
-        
+
         if total is not None:
             start = offset + 1
             end = offset + len(films)
             print(f"=== Показаны {start}–{end} из {total} ===\n")
-        
-        print_movies_table(films, offset=offset, total=total, show_header=False)
+
+        print_movies_table(
+            films,
+            offset=offset,
+            total=total,
+            show_header=False)
         print(SEPARATOR)
-        
+
         # Если это последняя страница, выходим
         if len(films) < LIMIT:
             break
-        
-        if not _ask_yes("\n📄 Показать следующие 10 фильмов? (y/n): "):
+
+        choice = input(
+            "\n📄 Нажмите Enter для продолжения или Esc для выхода: ").strip().lower()
+        if choice == "\x1b" or "esc" in choice:
             break
-        
+
         offset += LIMIT
-    
+
     print()
 
 
@@ -96,9 +102,11 @@ def handle_keyword_search():
     print("\n" + "=" * 60)
     print(f"{'🔍 ПОИСК ПО КЛЮЧЕВОМУ СЛОВУ':^60}")
     print("=" * 60 + "\n")
-    
-    # Сбор критериев поиска (сначала формируем запрос, затем выполняем и логируем)
-    keyword = input("➤ Введите ключевое слово (или Enter для отмены): ").strip()
+
+    # Сбор критериев поиска (сначала формируем запрос, затем выполняем и
+    # логируем)
+    keyword = input(
+        "➤ Введите ключевое слово (или Enter для отмены): ").strip()
     if not keyword:
         print("\n🔙 Ключевое слово не задано, возвращаюсь в меню.\n")
         return
@@ -112,7 +120,8 @@ def handle_keyword_search():
         else:
             print_genres(genres)
             try:
-                idx = int(input("➤ Выберите номер жанра (или Enter для отмены): ").strip())
+                idx = int(
+                    input("➤ Выберите номер жанра (или Enter для отмены): ").strip())
                 if 1 <= idx <= len(genres):
                     genre_id = genres[idx - 1].get("category_id")
                     print(f"\n✅ Выбран жанр: {genres[idx - 1].get('name')}\n")
@@ -149,7 +158,8 @@ def handle_keyword_search():
             for i, r in enumerate(ratings, 1):
                 desc = RATING_DESCRIPTIONS.get(r, "(описание отсутствует)")
                 print(f"  {i}. {r} — {desc}")
-            r_choice = input("\n➤ Выберите номер рейтинга (или Enter для пропуска): ").strip()
+            r_choice = input(
+                "\n➤ Выберите номер рейтинга (или Enter для пропуска): ").strip()
             if r_choice:
                 ri = int(r_choice)
                 if 1 <= ri <= len(ratings):
@@ -162,7 +172,12 @@ def handle_keyword_search():
 
     # Подсчёт общего числа совпадений по сформированному запросу
     try:
-        total = get_keyword_count(keyword, genre_id=genre_id, year_min=year_min, year_max=year_max, rating=rating)
+        total = get_keyword_count(
+            keyword,
+            genre_id=genre_id,
+            year_min=year_min,
+            year_max=year_max,
+            rating=rating)
         print(f"\n📊 Найдено всего: {total} фильм(ов)\n")
     except Exception:
         total = None
@@ -185,22 +200,35 @@ def handle_keyword_search():
     # Постраничный вывод — без логирования каждой страницы
     offset = 0
     while True:
-        films = search_by_keyword(keyword, offset=offset, limit=LIMIT, genre_id=genre_id, year_min=year_min, year_max=year_max, rating=rating)
+        films = search_by_keyword(
+            keyword,
+            offset=offset,
+            limit=LIMIT,
+            genre_id=genre_id,
+            year_min=year_min,
+            year_max=year_max,
+            rating=rating)
         if total is not None:
             start = offset + 1
             end = offset + len(films)
             print(f"=== Результаты (Показаны {start}–{end} из {total}) ===")
-            print_movies_table(films, offset=offset, total=total, show_header=False)
+            print_movies_table(
+                films,
+                offset=offset,
+                total=total,
+                show_header=False)
             print(SEPARATOR)
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
         # После показа страницы — позволяеm выбрать один или несколько фильмов подряд
         # Если пользователь сразу нажимает Enter (пустой ввод) — переходим дальше.
-        # На последней странице выбор также доступен, но после него мы вернёмся в меню.
+        # На последней странице выбор также доступен, но после него мы вернёмся
+        # в меню.
         user_pressed_enter = False
         while True:
-            choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
+            choice = input(
+                "Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
             if not choice:
                 user_pressed_enter = True
                 break
@@ -211,11 +239,13 @@ def handle_keyword_search():
                     film = films[idx - offset - 1]
                     actors = get_actors_by_film(film.get("film_id"))
                     print_actors(actors, film_title=film.get("title"))
-                    
-                    # Предложить выбрать актёра для просмотра его фильмов
-                    if actors and _ask_yes("\n🎭 Хотите посмотреть фильмы одного из актёров? (y/n): "):
+
+                    # Выбор актёра для просмотра его фильмов
+                    if actors:
                         while True:
-                            actor_choice = input(f"\n➤ Введите номер актёра (1-{len(actors)}) или Enter для отмены: ").strip()
+                            actor_choice = input(
+                                "\n➤ Выберите актёра для просмотра фильмов "
+                                "(Enter — отмена): ").strip()
                             if not actor_choice:
                                 break
                             try:
@@ -223,28 +253,40 @@ def handle_keyword_search():
                                 if 1 <= actor_idx <= len(actors):
                                     selected_actor = actors[actor_idx - 1]
                                     actor_id = selected_actor.get('actor_id')
-                                    fn = selected_actor.get('first_name', '').strip().title()
-                                    ln = selected_actor.get('last_name', '').strip().title()
+                                    fn = selected_actor.get(
+                                        'first_name', '').strip().title()
+                                    ln = selected_actor.get(
+                                        'last_name', '').strip().title()
                                     actor_name = f"{fn} {ln}"
                                     handle_actor_films(actor_id, actor_name)
                                     break
                                 else:
-                                    print(f"❌ Неверный номер — введите число от 1 до {len(actors)}")
+                                    print(
+                                        f"❌ Неверный номер — введите число от 1 до {
+                                            len(actors)}")
                             except ValueError:
                                 print("❌ Ожидался номер актёра.")
                 else:
-                    print(f"Неверный номер — введите число от {offset + 1} до {offset + len(films)}")
+                    print(
+                        f"Неверный номер — введите число от {
+                            offset +
+                            1} до {
+                            offset +
+                            len(films)}")
             except ValueError:
                 print("Ожидался номер фильма.")
 
-        # Если это была последняя страница, не спрашиваем про следующую — возвращаемся в меню
+        # Если это была последняя страница, не спрашиваем про следующую —
+        # возвращаемся в меню
         if len(films) < LIMIT:
             break
         if user_pressed_enter:
             # Пользователь нажал Enter — перейти к следующей странице
             offset += LIMIT
             continue
-        if not _ask_yes("Показать следующие 10 результатов? (y/n): "):
+        choice = input(
+            "\n📄 Нажмите Enter для продолжения или Esc для выхода: ").strip().lower()
+        if choice == "\x1b" or "esc" in choice:
             break
         offset += LIMIT
 
@@ -258,7 +300,7 @@ def handle_genre_search():
     print("\n" + "=" * 60)
     print(f"{'🎭 ПОИСК ПО ЖАНРУ И ГОДАМ':^60}")
     print("=" * 60 + "\n")
-    
+
     # Загрузка списка жанров из БД
     genres = get_genres()
     if not genres:
@@ -275,7 +317,7 @@ def handle_genre_search():
         return
     genre = genres[idx - 1]
     print(f"\n✅ Выбран жанр: {genre.get('name')}\n")
-    
+
     min_year, max_year = get_year_bounds()
     print(f"📅 Доступные годы: {min_year} — {max_year}")
     lower = input(f"➤ Нижний год (или Enter для {min_year}): ").strip()
@@ -300,7 +342,8 @@ def handle_genre_search():
             for i, r in enumerate(ratings, 1):
                 desc = RATING_DESCRIPTIONS.get(r, "(описание отсутствует)")
                 print(f"{i}. {r} — {desc}")
-            r_choice = input("Выберите номер рейтинга (или Enter для пропуска): ").strip()
+            r_choice = input(
+                "Выберите номер рейтинга (или Enter для пропуска): ").strip()
             if r_choice:
                 ri = int(r_choice)
                 if 1 <= ri <= len(ratings):
@@ -312,38 +355,55 @@ def handle_genre_search():
 
     # Показать общее количество совпадений перед пагинацией
     try:
-        total = get_genre_year_count(genre.get("category_id"), y1, y2, rating=rating)
+        total = get_genre_year_count(
+            genre.get("category_id"), y1, y2, rating=rating)
         print(f"📊 Найдено всего: {total} фильм(ов)\n")
     except Exception:
         total = None
 
     # Логируем сформированный запрос ОДИН раз (без offset)
-    params = {"genre_id": genre.get("category_id"), "year_min": y1, "year_max": y2}
+    params = {
+        "genre_id": genre.get("category_id"),
+        "year_min": y1,
+        "year_max": y2}
     if rating:
         params["rating"] = rating
     try:
-        log_search("genre_year", params, int(total) if total is not None else 0)
+        log_search("genre_year", params, int(
+            total) if total is not None else 0)
     except Exception:
         pass
 
     offset = 0
     while True:
-        films = search_by_genre_and_year(genre["category_id"], y1, y2, offset=offset, limit=LIMIT, rating=rating)
+        films = search_by_genre_and_year(
+            genre["category_id"],
+            y1,
+            y2,
+            offset=offset,
+            limit=LIMIT,
+            rating=rating)
         if total is not None:
             start = offset + 1
             end = offset + len(films)
             print(f"=== Результаты (Показаны {start}–{end} из {total}) ===")
-            print_movies_table(films, offset=offset, total=total, show_header=False)
+            print_movies_table(
+                films,
+                offset=offset,
+                total=total,
+                show_header=False)
             print(SEPARATOR)
         else:
             print_movies_table(films, offset=offset, total=total)
             print(SEPARATOR)
         # После показа страницы — позволяем выбрать несколько фильмов подряд для просмотра актёров
         # Если пользователь сразу нажимает Enter (пустой ввод) — переходим дальше.
-        # На последней странице выбор также доступен, но после него мы вернёмся в меню.
+        # На последней странице выбор также доступен, но после него мы вернёмся
+        # в меню.
         user_pressed_enter = False
         while True:
-            choice = input("Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
+            choice = input(
+                "Введите номер фильма для просмотра актёров (Enter — продолжить): ").strip()
             if not choice:
                 user_pressed_enter = True
                 break
@@ -353,11 +413,13 @@ def handle_genre_search():
                     film = films[idx - offset - 1]
                     actors = get_actors_by_film(film.get("film_id"))
                     print_actors(actors, film_title=film.get("title"))
-                    
-                    # Предложить выбрать актёра для просмотра его фильмов
-                    if actors and _ask_yes("\n🎭 Хотите посмотреть фильмы одного из актёров? (y/n): "):
+
+                    # Выбор актёра для просмотра его фильмов
+                    if actors:
                         while True:
-                            actor_choice = input(f"\n➤ Введите номер актёра (1-{len(actors)}) или Enter для отмены: ").strip()
+                            actor_choice = input(
+                                "\n➤ Выберите актёра для просмотра фильмов "
+                                "(Enter — отмена): ").strip()
                             if not actor_choice:
                                 break
                             try:
@@ -365,40 +427,51 @@ def handle_genre_search():
                                 if 1 <= actor_idx <= len(actors):
                                     selected_actor = actors[actor_idx - 1]
                                     actor_id = selected_actor.get('actor_id')
-                                    fn = selected_actor.get('first_name', '').strip().title()
-                                    ln = selected_actor.get('last_name', '').strip().title()
+                                    fn = selected_actor.get(
+                                        'first_name', '').strip().title()
+                                    ln = selected_actor.get(
+                                        'last_name', '').strip().title()
                                     actor_name = f"{fn} {ln}"
                                     handle_actor_films(actor_id, actor_name)
                                     break
                                 else:
-                                    print(f"❌ Неверный номер — введите число от 1 до {len(actors)}")
+                                    print(
+                                        f"❌ Неверный номер — введите число от 1 до {
+                                            len(actors)}")
                             except ValueError:
                                 print("❌ Ожидался номер актёра.")
                 else:
-                    print(f"Неверный номер — введите число от {offset + 1} до {offset + len(films)}")
+                    print(
+                        f"Неверный номер — введите число от {
+                            offset +
+                            1} до {
+                            offset +
+                            len(films)}")
             except ValueError:
                 print("Ожидался номер фильма.")
 
-        # Если это была последняя страница, не спрашиваем про следующую — возвращаемся в меню
+        # Если это была последняя страница, не спрашиваем про следующую —
+        # возвращаемся в меню
         if len(films) < LIMIT:
             break
         if user_pressed_enter:
             offset += LIMIT
             continue
-        if not _ask_yes("Показать следующие 10 результатов? (y/n): "):
+        choice = input(
+            "\n📄 Нажмите Enter для продолжения или Esc для выхода: ").strip().lower()
+        if choice == "\x1b" or "esc" in choice:
             break
         offset += LIMIT
 
 
 def main():
     """Главное меню приложения с интерактивным управлением."""
-    print("\n" + "🎬" * 30)
-    print(f"{'ДОБРО ПОЖАЛОВАТЬ В СИСТЕМУ ПОИСКА ФИЛЬМОВ':^60}")
-    print(f"{'База данных: Sakila':^60}")
-    print("🎬" * 30 + "\n")
-    
+
+    print(f"\n{'ДОБРО ПОЖАЛОВАТЬ В СИСТЕМУ ПОИСКА ФИЛЬМОВ':^60}")
+    print(f"{'База данных: Sakila':^60}\n")
+
     while True:
-        print("=" * 60)
+        # print("=" * 60)
         print(f"{'📋 ГЛАВНОЕ МЕНЮ':^60}")
         print("=" * 60)
         print("  1. 🔍 Поиск по ключевому слову")
@@ -423,7 +496,8 @@ def main():
             print(SEPARATOR)
 
         elif choice == "4":
-            if _ask_yes("\n⚠️  Это удалит ВСЕ сохранённые запросы в MongoDB. Продолжить? (y/n): "):
+            if _ask_yes(
+                    "\n⚠️  Это удалит ВСЕ сохранённые запросы в MongoDB. Продолжить? (y/n): "):
                 try:
                     deleted = clear_logs()
                     print(f"\n✅ Удалено документов: {deleted}")
@@ -434,7 +508,7 @@ def main():
                 print("\n🔙 Операция отменена.")
                 print(SEPARATOR)
 
-        elif choice in ["q", "quit", "exit", "Q"]:
+        elif choice in ["q", "quit", "exit", "Q", "й", "Й"]:
             print("\n" + "=" * 60)
             print(f"{'👋 До встречи!':^60}")
             print("=" * 60 + "\n")

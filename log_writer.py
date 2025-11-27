@@ -16,7 +16,6 @@ def log_search(search_type, params, results_count):
     except Exception:
         params_clean = params
 
-   
     ts = datetime.now(ZoneInfo("Europe/Berlin")).replace(microsecond=0)
     ts_str = ts.strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -28,7 +27,8 @@ def log_search(search_type, params, results_count):
     }
     # Если Mongo не доступен — пропускаем логирование и информируем
     if coll is None:
-        # Одноразовое информирование оставим на усмотрение: здесь выводим краткое сообщение
+        # Одноразовое информирование оставим на усмотрение: здесь выводим
+        # краткое сообщение
         print("Инфо: MongoDB недоступна — пропускаю логирование.")
         return
 
