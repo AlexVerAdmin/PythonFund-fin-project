@@ -8,7 +8,6 @@ from config import MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB, LIMIT, RATING_O
 
 def get_ratings_lesser_or_equal(rating):
     """Возвращает список рейтингов, включающий `rating` и более мягкие.
-
     Например, если rating="PG-13", вернёт ["G","PG","PG-13"].
     Если рейтинг не найден — вернёт список из самого значения.
     """
@@ -17,7 +16,6 @@ def get_ratings_lesser_or_equal(rating):
     try:
         idx = RATING_ORDER.index(rating)
     except ValueError:
-        # неизвестный рейтинг — просто вернуть сам рейтинг
         return [rating]
     # вернуть все рейтинги до и включая выбранный
     return RATING_ORDER[: idx + 1]
@@ -25,8 +23,7 @@ def get_ratings_lesser_or_equal(rating):
 
 def get_connection():
     """Возвращает новое подключение PyMySQL с использованием DictCursor.
-
-    Используется `with` для корректного закрытия.
+    Используйте `with` для корректного закрытия.
     """
     try:
         return pymysql.connect(
@@ -73,7 +70,7 @@ def get_ratings():
 
 
 def get_year_bounds():
-    """Вернуть кортеж `(min_year, max_year)` по данным таблицы `film`."""
+    """Возвращает кортеж `(min_year, max_year)` по данным таблицы `film`."""
     query = "SELECT MIN(release_year) AS min_year, MAX(release_year) AS max_year FROM film"
     with get_connection() as conn:
         with conn.cursor() as cursor:
@@ -91,7 +88,6 @@ def search_by_keyword(
         year_max=None,
         rating=None):
     """Поиск фильмов по ключевому слову с опциональными фильтрами.
-
     Поддерживаются фильтры: `genre_id`, `year_min`/`year_max`, `rating`.
     """
     params = []
@@ -174,7 +170,7 @@ def get_keyword_count(
         year_min=None,
         year_max=None,
         rating=None):
-    """Вернуть общее число фильмов, соответствующих ключу и фильтрам."""
+    """Возвращает общее число фильмов, соответствующих ключу и фильтрам."""
     params = []
     where_clauses = ["f.title LIKE %s"]
     params.append(f"%{keyword}%")
@@ -225,7 +221,7 @@ def get_genre_year_count(genre_id, year_min, year_max, rating=None):
 
 
 def get_actors_by_film(film_id):
-    """Вернуть список актёров (actor_id, first_name, last_name) для фильма по `film_id`.
+    """Возвращает список актёров (actor_id, first_name, last_name) для фильма по `film_id`.
 
     Результат — список словарей, упорядоченных по фамилии, затем по имени.
     """
@@ -243,7 +239,7 @@ def get_actors_by_film(film_id):
 
 
 def get_films_by_actor(actor_id, offset=0, limit=LIMIT):
-    """Вернуть список фильмов с участием актёра по `actor_id`.
+    """Возвращает список фильмов с участием актёра по `actor_id`.
 
     Результат — список словарей с информацией о фильмах,
     упорядоченных по названию фильма.
@@ -264,7 +260,7 @@ def get_films_by_actor(actor_id, offset=0, limit=LIMIT):
 
 
 def get_films_by_actor_count(actor_id):
-    """Вернуть количество фильмов с участием актёра."""
+    """Возвращает количество фильмов с участием актёра."""
     query = (
         "SELECT COUNT(DISTINCT f.film_id) AS cnt "
         "FROM film f "

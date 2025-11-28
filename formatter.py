@@ -4,6 +4,7 @@
 """
 
 from config import RATING_DESCRIPTIONS
+from favorites import is_favorite
 
 # Визуальный разделитель, печатаемый после блока результатов
 SEPARATOR = "*" * 100
@@ -53,10 +54,14 @@ def print_movies_table(films, offset=0, total=None, show_header=True):
         rating_desc = RATING_DESCRIPTIONS.get(rating, rating)
         desc = film.get("description") or ""
 
+        # Проверяем, находится ли фильм в избранном
+        film_id = film.get("film_id")
+        fav_marker = " " * 10 + "❤" if film_id and is_favorite(film_id) else ""
+
         # Форматируем вывод с разделителем между фильмами
-        print(f"\n  {i}.   {title} ({year})")
-        print(f"       Аренда: ${ren} | Покупка: ${rep}")
-        print(f"       Рейтинг: {rating_desc}")
+        print(f"\n  {i}.   {title} ({year}){fav_marker}")
+        print(f"   Аренда: ${ren} | Покупка: ${rep} | Рейтинг: {rating_desc}")
+
         if desc:
             # Ограничиваем длину описания для лучшей читаемости
             desc_lines = desc[:200] + "..." if len(desc) > 200 else desc

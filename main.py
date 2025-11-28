@@ -1,8 +1,6 @@
 """Консольное интерактивное приложение для поиска фильмов.
-
 Модуль содержит текстовое меню приложения для работы с базой Sakila.
 Функции поиска вынесены в модуль `searches`.
-
 Основная функция:
 - `main` — цикл главного меню приложения.
 """
@@ -10,6 +8,7 @@
 from log_stats import get_top_queries, get_last_queries, clear_logs
 from formatter import print_stats, SEPARATOR, SEPARATOR_EQUAL
 from searches import handle_keyword_search, handle_genre_search
+from favorites import handle_view_favorites, handle_clear_favorites
 from input_utils import process_yes_no_input
 
 
@@ -27,6 +26,8 @@ def main():
         print("  2.  Поиск по жанру и диапазону лет")
         print("  3.  Показать статистику запросов")
         print("  4.  Очистить логи MongoDB")
+        print("  5.  Просмотр избранного")
+        print("  6.  Очистить избранное")
         print("  q.  Выход")
         print(SEPARATOR_EQUAL)
 
@@ -57,6 +58,14 @@ def main():
                 print("\n Операция отменена.")
                 print(SEPARATOR)
 
+        elif choice == "5":
+            handle_view_favorites()
+            print(SEPARATOR)
+
+        elif choice == "6":
+            handle_clear_favorites()
+            print(SEPARATOR)
+
         elif choice in ["q", "quit", "exit", "Q", "й", "Й"]:
             print("\n" + SEPARATOR_EQUAL)
             print(f"{' До встречи!':^60}")
@@ -64,7 +73,7 @@ def main():
             break
 
         else:
-            print("\n Неверная опция. Пожалуйста, выберите 1-4 или q.\n")
+            print("\n Неверная опция. Пожалуйста, выберите 1-6 или q.\n")
 
 
 if __name__ == "__main__":

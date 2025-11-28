@@ -25,7 +25,7 @@ MONGO_PASS = os.getenv("MONGO_PASS")
 MONGO_DB = os.getenv("MONGO_DB")
 MONGO_COLL = os.getenv("MONGO_COLL")
 # Лимит результатов на одной странице по умолчанию для поисковых запросов.
-LIMIT = int(os.getenv("LIMIT"))
+LIMIT = 9
 
 # Настраиваемый порядок рейтингов (от мягкого к строгому).
 RATING_ORDER = ["G", "PG", "PG-13", "R", "NC-17"]

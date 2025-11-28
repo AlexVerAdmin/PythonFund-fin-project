@@ -15,3 +15,5 @@
 !mongo_client.py
 !mysql_connector.py
 !README.md
+!searches.py
+!input_utils.py
