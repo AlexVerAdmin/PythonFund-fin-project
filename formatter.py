@@ -7,6 +7,8 @@ from config import RATING_DESCRIPTIONS
 
 # Визуальный разделитель, печатаемый после блока результатов
 SEPARATOR = "*" * 100
+SEPARATOR_MINUS = "-" * 100
+SEPARATOR_EQUAL = "=" * 70
 
 
 def print_movies_table(films, offset=0, total=None, show_header=True):
@@ -24,7 +26,7 @@ def print_movies_table(films, offset=0, total=None, show_header=True):
             end = offset + len(films)
             print(f"{f' РЕЗУЛЬТАТЫ ПОИСКА (Показаны {start}–{end} из {total})':^100}")
         else:
-            # Центрирование через формат-спецификатор f-строки
+            # Центрирование 
             print(f"{' РЕЗУЛЬТАТЫ ПОИСКА':^100}")
         # print("=" * 100)
 
@@ -35,7 +37,9 @@ def print_movies_table(films, offset=0, total=None, show_header=True):
         rep_raw = film.get("replacement_cost")
 
         try:
-            ren = f"{float(ren_raw):.2f}" if ren_raw is not None else "N/A"
+            # Форматируем цены до двух знаков после запятой
+            # если_истина if условие else если_ложь
+            ren = f"{float(ren_raw):.2f}" if ren_raw is not None else "N/A" 
         except Exception:
             ren = str(ren_raw) if ren_raw is not None else "N/A"
         try:
@@ -103,7 +107,7 @@ def print_stats(top_queries, last_queries):
     Выводит статистику популярных и последних запросов из MongoDB.
     """
     # print("\n" + "=" * 80)
-    print(f"{' ПОПУЛЯРНЫЕ ЗАПРОСЫ':^80}")
+    print(f"\n{' ПОПУЛЯРНЫЕ ЗАПРОСЫ':^80}")
     # print("=" * 80)
 
     if not top_queries:
@@ -128,7 +132,7 @@ def print_stats(top_queries, last_queries):
             print(f"     Последний запрос: {last}")
 
     # print("\n" + "=" * 80)
-    print(f"{' НЕДАВНИЕ ЗАПРОСЫ':^80}")
+    print(f"\n{' НЕДАВНИЕ ЗАПРОСЫ':^80}")
     # print("=" * 80)
 
     if not last_queries:
@@ -148,21 +152,21 @@ def print_stats(top_queries, last_queries):
 
             print(f"\n  {idx}. [{timestamp}] {type_name}")
             print(f"     Параметры: {_format_search_params(params)}")
-            print(f"     Найдено результатов: {results_count}")
+            print(f"\n     Найдено результатов: {results_count}")
 
-    print("=" * 80 + "\n")
+    print(SEPARATOR_EQUAL + "\n")
 
 
 def print_actors(actors, film_title=None):
     """
     Выводит список актёров для выбранного фильма.
     """
-    print("\n" + "=" * 70)
+    print("\n" + SEPARATOR_EQUAL)
     if film_title:
         print(f"{f' АКТЁРЫ ФИЛЬМА: {film_title}':^70}")
     else:
         print(f"{' СПИСОК АКТЁРОВ':^70}")
-    print("=" * 70)
+    print(SEPARATOR_EQUAL)
 
     if not actors:
         print("\n    Актёры не найдены.\n")
@@ -172,4 +176,4 @@ def print_actors(actors, film_title=None):
             ln = (a.get('last_name') or '').strip().title()
             print(f"  {idx:2d}. {fn} {ln}")
 
-    print("=" * 70 + "\n")
+    print(SEPARATOR_EQUAL + "\n")
