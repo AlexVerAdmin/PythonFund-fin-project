@@ -30,6 +30,37 @@ from input_utils import process_yes_no_input, process_input, convert_layout_to_e
 from favorites import add_to_favorites
 
 
+def _get_year_input(prompt, min_year, max_year, allow_empty=True):
+    """Запрашивает ввод года с валидацией.
+    
+    Параметры:
+        prompt: Текст приглашения для ввода
+        min_year: Минимально допустимый год
+        max_year: Максимально допустимый год
+        allow_empty: Разрешить пустой ввод (Enter)
+    
+    Возвращает:
+        int или None: Введённый год или None если пользователь нажал Enter
+    """
+    while True:
+        year_input = input(prompt).strip()
+        if not year_input:
+            if allow_empty:
+                return None
+            continue
+        try:
+            year = int(year_input)
+            if year < 0 or len(year_input) != 4:
+                print("Год должен быть четырёхзначным положительным числом. Попробуйте снова.")
+                continue
+            if year < int(min_year) or year > int(max_year):
+                print(f"Год должен быть в диапазоне {min_year}—{max_year}. Попробуйте снова.")
+                continue
+            return year
+        except ValueError:
+            print("Неверный формат. Введите четырёхзначное число.")
+
+
 def handle_actor_films(actor_id, actor_name):
     """Показать все фильмы с участием выбранного актёра.
 
@@ -77,7 +108,7 @@ def handle_actor_films(actor_id, actor_name):
         else:
             prompt = "\n Нажмите Enter для продолжения, 'f<номер>' для добавления в избранное или 'q' для выхода: "
         choice = process_input(prompt).lower()
-        if choice in ('q', 'quit', 'exit', 'esc'):
+        if choice == 'q':
             break
         
         # Обработка команды добавления в избранное
@@ -132,32 +163,40 @@ def handle_keyword_search():
             print("\n  Список жанров пуст, фильтр по жанру пропущен.\n")
         else:
             print_genres(genres)
-            try:
-                idx = int(
-                    input(" Выберите номер жанра (или Enter для отмены): ").strip())
-                if 1 <= idx <= len(genres):
-                    genre_id = genres[idx - 1].get("category_id")
-                    print(f"\n Выбран жанр: {genres[idx - 1].get('name')}\n")
-                else:
-                    print("\n  Неверный номер жанра, фильтр пропущен.\n")
-            except Exception:
-                print("\n Фильтр по жанру пропущен.\n")
+            while True:
+                try:
+                    idx_input = input(" Выберите номер жанра (или Enter для отмены): ").strip()
+                    if not idx_input:
+                        break
+                    idx = int(idx_input)
+                    if 1 <= idx <= len(genres):
+                        genre_id = genres[idx - 1].get("category_id")
+                        print(f"\n Выбран жанр: {genres[idx - 1].get('name')}\n")
+                        break
+                    else:
+                        print(f"Неверный номер. Введите число от 1 до {len(genres)}")
+                except ValueError:
+                    print("Неверный формат. Введите номер жанра.")
 
     # Опциональные года
     year_min = year_max = None
     try:
         min_year, max_year = get_year_bounds()
         print(f"\n Доступные годы: {min_year} — {max_year}")
-        lower = input(f" Нижний год (Enter для {min_year}): ").strip()
-        upper = input(f" Верхний год (Enter для {max_year}): ").strip()
-        if lower or upper:
-            y1 = int(lower) if lower else int(min_year)
-            y2 = int(upper) if upper else int(max_year)
-            if y1 <= y2:
-                year_min, year_max = y1, y2
-                print(f"\n Диапазон лет: {y1}–{y2}\n")
-            else:
-                print("\n  Неправильный диапазон лет, фильтр по годам пропущен.\n")
+        
+        # Ввод нижнего года с валидацией (по умолчанию min_year)
+        year_input = _get_year_input(f" Нижний год (Enter для {min_year}): ", min_year, max_year, allow_empty=True)
+        y1 = year_input if year_input is not None else int(min_year)
+        
+        # Ввод верхнего года с валидацией (по умолчанию max_year)
+        year_input = _get_year_input(f" Верхний год (Enter для {max_year}): ", min_year, max_year, allow_empty=True)
+        y2 = year_input if year_input is not None else int(max_year)
+        
+        if y1 <= y2:
+            year_min, year_max = y1, y2
+            print(f"\n Диапазон лет: {y1}–{y2}\n")
+        else:
+            print("\n Неправильный диапазон лет, фильтр по годам пропущен.\n")
     except Exception:
         # Если не удалось получить границы — пропускаем
         year_min = year_max = None
@@ -203,12 +242,8 @@ def handle_keyword_search():
         params.update({"year_min": year_min, "year_max": year_max})
     if rating:
         params["rating"] = rating
-    try:
-        # Если total известен, логируем его как результаты, иначе 0
-        log_search("keyword", params, int(total) if total is not None else 0)
-    except Exception:
-        # Не критично, продолжаем без прерывания
-        pass
+    
+    log_search("keyword", params, int(total) if total is not None else 0)
 
     # Постраничный вывод результатов
     offset = 0
@@ -248,7 +283,7 @@ def handle_keyword_search():
                 f"{start}–{end} из {total}. Введите номер фильма для просмотра актеров, "
                 f"f<номер> для добавления в избранное, Enter - продолжить, q - выход: ")
             # Позволяем прерывать просмотр страниц сразу из выбора номера
-            if choice.lower() in ('q', 'quit', 'exit', 'esc'):
+            if choice.lower() == 'q':
                 exit_requested = True
                 break
             if not choice:
@@ -268,11 +303,11 @@ def handle_keyword_search():
                             film.get('release_year'),
                             film.get('rating')
                         )
-                        print(f" ⭐ Фильм '{film.get('title')}' добавлен в избранное!")
+                        print(f"Фильм '{film.get('title')}' добавлен в избранное!")
                     else:
-                        print(f" ⚠️  Неверный номер фильма (доступно: {offset + 1}-{offset + len(films)})")
+                        print(f"Неверный номер фильма (доступно: {offset + 1}-{offset + len(films)})")
                 except (ValueError, IndexError):
-                    print(" ⚠️  Неверный формат. Используйте: f<номер> (например, f5)")
+                    print("Неверный формат. Используйте: f<номер> (например, f5)")
                 continue
             
             try:
@@ -342,52 +377,77 @@ def handle_keyword_search():
             continue
         choice = process_input(
             "\n Нажмите Enter для продолжения или введите 'q' для выхода: ").lower()
-        if choice in ('q', 'quit', 'exit', 'esc'):
+        if choice == 'q':
             break
         offset += LIMIT
 
 
 def handle_genre_search():
-    """Поиск фильмов по жанру и диапазону лет (интерактивный режим).
+    """Поиск фильмов по жанру и/или диапазону лет (интерактивный режим).
 
-    Пользователь выбирает жанр из списка и задаёт границы годов. Результаты
+    Пользователь может выбрать жанр, диапазон лет или оба параметра. Результаты
     показываются по страницам и логируются.
     """
     print("\n" + SEPARATOR_EQUAL)
-    print(f"{' ПОИСК ПО ЖАНРУ И ГОДАМ':^60}")
+    print(f"{' ПОИСК ПО ЖАНРУ И/ИЛИ ГОДАМ':^60}")
     print(SEPARATOR_EQUAL + "\n")
 
-    # Загрузка списка жанров из БД
+    # Опциональный жанр
+    genre_id = None
+    genre_name = None
     genres = get_genres()
     if not genres:
         print("  Список жанров пуст.\n")
-        return
-    print_genres(genres)
-    try:
-        idx = int(input(" Выберите номер жанра: ").strip())
-        if not 1 <= idx <= len(genres):
-            print("\n Неверный выбор\n")
-            return
-    except ValueError:
-        print("\n Неверный ввод\n")
-        return
-    genre = genres[idx - 1]
-    print(f"\n Выбран жанр: {genre.get('name')}\n")
+    else:
+        print_genres(genres)
+        while True:
+            try:
+                idx_input = input(" Выберите номер жанра (или Enter для пропуска): ").strip()
+                if not idx_input:
+                    break
+                idx = int(idx_input)
+                if 1 <= idx <= len(genres):
+                    genre_id = genres[idx - 1].get("category_id")
+                    genre_name = genres[idx - 1].get('name')
+                    print(f"\n Выбран жанр: {genre_name}\n")
+                    break
+                else:
+                    print(f"Неверный номер. Введите число от 1 до {len(genres)}")
+            except ValueError:
+                print("Неверный формат. Введите номер жанра.")
 
-    min_year, max_year = get_year_bounds()
-    print(f" Доступные годы: {min_year} — {max_year}")
-    lower = input(f" Нижний год (или Enter для {min_year}): ").strip()
-    upper = input(f" Верхний год (или Enter для {max_year}): ").strip()
+    # Опциональные года
+    y1 = y2 = None
     try:
-        y1 = int(lower) if lower else int(min_year)
-        y2 = int(upper) if upper else int(max_year)
-    except ValueError:
-        print("\n Неверный формат года\n")
+        min_year, max_year = get_year_bounds()
+        print(f" Доступные годы: {min_year} — {max_year}")
+        
+        # Ввод нижнего года с валидацией (можно пропустить)
+        y1 = _get_year_input(f" Нижний год (Enter для пропуска): ", min_year, max_year, allow_empty=True)
+        
+        # Ввод верхнего года с валидацией (можно пропустить)
+        y2 = _get_year_input(f" Верхний год (Enter для пропуска): ", min_year, max_year, allow_empty=True)
+        
+        # Если ввели только один год, используем границы по умолчанию для второго
+        if y1 is not None and y2 is None:
+            y2 = int(max_year)
+        elif y2 is not None and y1 is None:
+            y1 = int(min_year)
+        
+        if y1 is not None and y2 is not None:
+            if y1 > y2:
+                print("\nНижний год больше верхнего, фильтр по годам пропущен.\n")
+                y1 = y2 = None
+            else:
+                print(f"\n Диапазон лет: {y1}–{y2}\n")
+    except Exception:
+        print("\n Ошибка получения границ лет, фильтр по годам пропущен.\n")
+        y1 = y2 = None
+    
+    # Проверка, что хотя бы один параметр задан
+    if genre_id is None and (y1 is None or y2 is None):
+        print("\n Не заданы параметры поиска. Возвращаюсь в меню.\n")
         return
-    if y1 > y2:
-        print("\n Нижний год больше верхнего\n")
-        return
-    print(f"\n Диапазон лет: {y1}–{y2}\n")
 
     # Опциональный рейтинг для жанра-поиска
     rating = None
@@ -412,30 +472,28 @@ def handle_genre_search():
     # Показать общее количество совпадений перед пагинацией
     try:
         total = get_genre_year_count(
-            genre.get("category_id"), y1, y2, rating=rating)
+            genre_id=genre_id, year_min=y1, year_max=y2, rating=rating)
         print(f"\n\n Найдено всего: {total} фильм(ов)\n")
     except Exception:
         total = None
 
     # Логируем сформированный запрос ОДИН раз (без offset)
-    params = {
-        "genre_id": genre.get("category_id"),
-        "year_min": y1,
-        "year_max": y2}
+    params = {}
+    if genre_id is not None:
+        params["genre_id"] = genre_id
+    if y1 is not None and y2 is not None:
+        params.update({"year_min": y1, "year_max": y2})
     if rating:
         params["rating"] = rating
-    try:
-        log_search("genre_year", params, int(
-            total) if total is not None else 0)
-    except Exception:
-        pass
+    
+    log_search("genre_year", params, int(total) if total is not None else 0)
 
     offset = 0
     while True:
         films = search_by_genre_and_year(
-            genre["category_id"],
-            y1,
-            y2,
+            genre_id=genre_id,
+            year_min=y1,
+            year_max=y2,
             offset=offset,
             limit=LIMIT,
             rating=rating)
@@ -466,7 +524,7 @@ def handle_genre_search():
                 f"{start}–{end} из {total}. Введите номер фильма для просмотра актеров, "
                 f"f<номер> для добавления в избранное, Enter - продолжить, q - выход: ")
             # Позволяем прерывать просмотр страниц сразу из выбора номера
-            if choice.lower() in ('q', 'quit', 'exit', 'esc'):
+            if choice.lower() == 'q':
                 exit_requested = True
                 break
             if not choice:
@@ -558,6 +616,6 @@ def handle_genre_search():
             continue
         choice = process_input(
             "\n Нажмите Enter для продолжения или введите 'q' для выхода: ").lower()
-        if choice in ('q', 'quit', 'exit', 'esc'):
+        if choice == 'q':
             break
         offset += LIMIT

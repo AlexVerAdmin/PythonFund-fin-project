@@ -8,7 +8,7 @@
 from log_stats import get_top_queries, get_last_queries, clear_logs
 from formatter import print_stats, SEPARATOR, SEPARATOR_EQUAL
 from searches import handle_keyword_search, handle_genre_search
-from favorites import handle_view_favorites, handle_clear_favorites
+from favorites import view_favorites, clear_favorites
 from input_utils import process_yes_no_input
 
 
@@ -23,7 +23,7 @@ def main():
         print(f"{' ГЛАВНОЕ МЕНЮ':^60}")
         print(SEPARATOR_EQUAL)
         print("  1.  Поиск по ключевому слову")
-        print("  2.  Поиск по жанру и диапазону лет")
+        print("  2.  Поиск по жанру и/или диапазону лет")
         print("  3.  Показать статистику запросов")
         print("  4.  Очистить логи MongoDB")
         print("  5.  Просмотр избранного")
@@ -59,11 +59,11 @@ def main():
                 print(SEPARATOR)
 
         elif choice == "5":
-            handle_view_favorites()
+            view_favorites()
             print(SEPARATOR)
 
         elif choice == "6":
-            handle_clear_favorites()
+            clear_favorites()
             print(SEPARATOR)
 
         elif choice in ["q", "quit", "exit", "Q", "й", "Й"]:

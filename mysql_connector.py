@@ -79,6 +79,38 @@ def get_year_bounds():
             return row.get("min_year"), row.get("max_year")
 
 
+def _build_keyword_query_parts(keyword, genre_id=None, year_min=None, year_max=None, rating=None):
+    """Строит общие части SQL-запроса для поиска по ключевому слову.
+    
+    Возвращает:
+        tuple: (sql_join, where_sql, params)
+    """
+    params = []
+    where_uslovija = ["f.title LIKE %s"]
+    params.append(f"%{keyword}%")
+
+    sql_join = ""
+    if genre_id is not None:
+        sql_join = "JOIN film_category fc ON f.film_id = fc.film_id"
+        where_uslovija.append("fc.category_id = %s")
+        params.append(int(genre_id))
+
+    if year_min is not None and year_max is not None:
+        where_uslovija.append("f.release_year BETWEEN %s AND %s")
+        params.append(int(year_min))
+        params.append(int(year_max))
+
+    if rating:
+        allowed = get_ratings_lesser_or_equal(rating)
+        if allowed:
+            placeholders = ",".join(["%s"] * len(allowed))
+            where_uslovija.append(f"f.rating IN ({placeholders})")
+            params.extend(allowed)
+
+    where_sql = " AND ".join(where_uslovija)
+    return sql_join, where_sql, params
+
+
 def search_by_keyword(
         keyword,
         offset=0,
@@ -90,74 +122,79 @@ def search_by_keyword(
     """Поиск фильмов по ключевому слову с опциональными фильтрами.
     Поддерживаются фильтры: `genre_id`, `year_min`/`year_max`, `rating`.
     """
-    params = []
-    where_clauses = ["f.title LIKE %s"]
-    params.append(f"%{keyword}%")
-
-    join_clause = ""
-    if genre_id is not None:
-        join_clause = "JOIN film_category fc ON f.film_id = fc.film_id"
-        where_clauses.append("fc.category_id = %s")
-        params.append(int(genre_id))
-
-    if year_min is not None and year_max is not None:
-        where_clauses.append("f.release_year BETWEEN %s AND %s")
-        params.append(int(year_min))
-        params.append(int(year_max))
-
-    if rating:
-        allowed = get_ratings_lesser_or_equal(rating)
-        if allowed:
-            placeholders = ",".join(["%s"] * len(allowed))
-            where_clauses.append(f"f.rating IN ({placeholders})")
-            params.extend(allowed)
-
-    where_sql = " AND ".join(where_clauses)
+    sql_join, where_sql, params = _build_keyword_query_parts(
+        keyword, genre_id, year_min, year_max, rating)
+    
     query = (
         "SELECT DISTINCT f.film_id, f.title, f.description, "
         "f.release_year, f.rating, f.rental_rate, "
         "f.replacement_cost "
         "FROM film f "
-        f"{join_clause} "
+        f"{sql_join} "
         f"WHERE {where_sql} "
         "ORDER BY f.title "
         "LIMIT %s OFFSET %s"
     )
     params.extend([int(limit), int(offset)])
-    query = query.format(join_clause=join_clause, where_sql=where_sql)
+    
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query, tuple(params))
             return cursor.fetchall()
 
 
+def _build_genre_year_query_parts(genre_id=None, year_min=None, year_max=None, rating=None):
+    """Строит общие части SQL-запроса для поиска по жанру и/или годам.
+    
+    Возвращает:
+        tuple: (sql_join, where_sql, params)
+    """
+    params = []
+    where_parts = []
+    sql_join = ""
+    
+    if genre_id is not None:
+        sql_join = "JOIN film_category fc ON f.film_id = fc.film_id"
+        where_parts.append("fc.category_id = %s")
+        params.append(int(genre_id))
+    
+    if year_min is not None and year_max is not None:
+        where_parts.append("f.release_year BETWEEN %s AND %s")
+        params.append(int(year_min))
+        params.append(int(year_max))
+    
+    if rating:
+        allowed = get_ratings_lesser_or_equal(rating)
+        if allowed:
+            placeholders = ",".join(["%s"] * len(allowed))
+            where_parts.append(f"f.rating IN ({placeholders})")
+            params.extend(allowed)
+    
+    where_sql = " AND ".join(where_parts) if where_parts else "1=1"
+    return sql_join, where_sql, params
+
+
 def search_by_genre_and_year(
-        genre_id,
-        year_min,
-        year_max,
+        genre_id=None,
+        year_min=None,
+        year_max=None,
         offset=0,
         limit=LIMIT,
         rating=None):
-    """Поиск фильмов по жанру и диапазону лет с опциональным фильтром `rating`."""
-    params = [int(genre_id), int(year_min), int(year_max)]
+    """Поиск фильмов по жанру и/или диапазону лет с опциональным фильтром `rating`."""
+    sql_join, where_sql, params = _build_genre_year_query_parts(genre_id, year_min, year_max, rating)
+    
     query = (
         "SELECT DISTINCT f.film_id, f.title, f.description, "
         "f.release_year, f.rating, f.rental_rate, "
         "f.replacement_cost "
         "FROM film f "
-        "JOIN film_category fc ON f.film_id = fc.film_id "
-        "WHERE fc.category_id = %s "
-        "AND f.release_year BETWEEN %s AND %s ")
-    if rating:
-        allowed = get_ratings_lesser_or_equal(rating)
-        if allowed:
-            placeholders = ",".join(["%s"] * len(allowed))
-            query += f"AND f.rating IN ({placeholders}) "
-            params = [int(genre_id), int(year_min), int(year_max)] + allowed
-        else:
-            params = [int(genre_id), int(year_min), int(year_max)]
-    query += "ORDER BY f.title LIMIT %s OFFSET %s"
+        f"{sql_join} "
+        f"WHERE {where_sql} "
+        "ORDER BY f.title LIMIT %s OFFSET %s"
+    )
     params.extend([int(limit), int(offset)])
+    
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query, tuple(params))
@@ -171,26 +208,11 @@ def get_keyword_count(
         year_max=None,
         rating=None):
     """Возвращает общее число фильмов, соответствующих ключу и фильтрам."""
-    params = []
-    where_clauses = ["f.title LIKE %s"]
-    params.append(f"%{keyword}%")
-    join_clause = ""
-    if genre_id is not None:
-        join_clause = "JOIN film_category fc ON f.film_id = fc.film_id"
-        where_clauses.append("fc.category_id = %s")
-        params.append(int(genre_id))
-    if year_min is not None and year_max is not None:
-        where_clauses.append("f.release_year BETWEEN %s AND %s")
-        params.append(int(year_min))
-        params.append(int(year_max))
-    if rating:
-        allowed = get_ratings_lesser_or_equal(rating)
-        if allowed:
-            placeholders = ",".join(["%s"] * len(allowed))
-            where_clauses.append(f"f.rating IN ({placeholders})")
-            params.extend(allowed)
-    where_sql = " AND ".join(where_clauses)
-    query = f"SELECT COUNT(DISTINCT f.film_id) AS cnt FROM film f {join_clause} WHERE {where_sql}"
+    sql_join, where_sql, params = _build_keyword_query_parts(
+        keyword, genre_id, year_min, year_max, rating)
+    
+    query = f"SELECT COUNT(DISTINCT f.film_id) AS cnt FROM film f {sql_join} WHERE {where_sql}"
+    
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query, tuple(params))
@@ -198,21 +220,17 @@ def get_keyword_count(
             return int(row.get("cnt", 0))
 
 
-def get_genre_year_count(genre_id, year_min, year_max, rating=None):
-    """Вернуть количество фильмов для жанра/диапазона лет и опц. рейтинга."""
-    params = [int(genre_id), int(year_min), int(year_max)]
+def get_genre_year_count(genre_id=None, year_min=None, year_max=None, rating=None):
+    """Вернуть количество фильмов для жанра и/или диапазона лет и опц. рейтинга."""
+    sql_join, where_sql, params = _build_genre_year_query_parts(genre_id, year_min, year_max, rating)
+    
     query = (
         "SELECT COUNT(DISTINCT f.film_id) AS cnt "
         "FROM film f "
-        "JOIN film_category fc ON f.film_id = fc.film_id "
-        "WHERE fc.category_id = %s AND f.release_year BETWEEN %s AND %s"
+        f"{sql_join} "
+        f"WHERE {where_sql}"
     )
-    if rating:
-        allowed = get_ratings_lesser_or_equal(rating)
-        if allowed:
-            placeholders = ",".join(["%s"] * len(allowed))
-            query += f" AND f.rating IN ({placeholders})"
-            params.extend(allowed)
+    
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query, tuple(params))

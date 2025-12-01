@@ -84,7 +84,7 @@ def print_genres(genres):
     for idx, g in enumerate(genres, start=1):
         name = g.get('name', 'Неизвестно')
         print(f"  {idx:2d}. {name}")
-    print("=" * 60 + "\n")
+    print(SEPARATOR_EQUAL + "\n")
 
 
 def _format_search_params(params):
@@ -157,7 +157,7 @@ def print_stats(top_queries, last_queries):
 
             print(f"\n  {idx}. [{timestamp}] {type_name}")
             print(f"     Параметры: {_format_search_params(params)}")
-            print(f"\n     Найдено результатов: {results_count}")
+            print(f"     Найдено результатов: {results_count}")
 
     print(SEPARATOR_EQUAL + "\n")
 
