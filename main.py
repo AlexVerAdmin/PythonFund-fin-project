@@ -66,7 +66,7 @@ def main():
             clear_favorites()
             print(SEPARATOR)
 
-        elif choice in ["q", "quit", "exit", "Q", "й", "Й"]:
+        elif choice.lower() == 'q':
             print("\n" + SEPARATOR_EQUAL)
             print(f"{' До встречи!':^60}")
             print(SEPARATOR_EQUAL + "\n")

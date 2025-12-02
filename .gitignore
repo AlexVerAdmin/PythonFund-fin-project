@@ -8,12 +8,12 @@
 # Разрешить файлы конфигурации
 !.env.example
 !config.py
+!favorites.py
 !formatter.py
+!input_utils.py
 !log_stats.py
-!log_writer.py
 !main.py
 !mongo_client.py
 !mysql_connector.py
 !README.md
 !searches.py
-!input_utils.py

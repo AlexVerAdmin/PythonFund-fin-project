@@ -3,7 +3,7 @@
 диапазонов лет и статистики.
 """
 
-from config import RATING_DESCRIPTIONS
+from config import AGE_RATING_DESCRIPTIONS
 from favorites import is_favorite
 
 # Визуальный разделитель, печатаемый после блока результатов
@@ -14,7 +14,7 @@ SEPARATOR_EQUAL = "=" * 70
 
 def print_movies_table(films, offset=0, total=None, show_header=True):
     """
-    Выводит список фильмов в читаемом табличном формате.
+    Выводит список фильмов в табличном формате.
     """
     if not films:
         print("\n   Фильмы не найдены\n")
@@ -49,9 +49,9 @@ def print_movies_table(films, offset=0, total=None, show_header=True):
             rep = str(rep_raw) if rep_raw is not None else "N/A"
         rating = film.get("rating", "N/A")
 
-        # Подставляем описание рейтинга из конфига; если описания нет —
+        # Подставляем описание возрастной категории из конфига; если описания нет —
         # оставляем код
-        rating_desc = RATING_DESCRIPTIONS.get(rating, rating)
+        rating_desc = AGE_RATING_DESCRIPTIONS.get(rating, rating)
         desc = film.get("description") or ""
 
         # Проверяем, находится ли фильм в избранном
@@ -80,7 +80,7 @@ def print_genres(genres):
     print(f"{' ДОСТУПНЫЕ ЖАНРЫ':^60}")
     # print("=" * 60)
 
-    # Выводим жанры для выбора пользователем (без ID из БД)
+    # Выводим жанры для выбора пользователем
     for idx, g in enumerate(genres, start=1):
         name = g.get('name', 'Неизвестно')
         print(f"  {idx:2d}. {name}")
@@ -101,8 +101,8 @@ def _format_search_params(params):
         parts.append(f"жанр ID: {params['genre_id']}")
     if "year_min" in params and "year_max" in params:
         parts.append(f"годы: {params['year_min']}–{params['year_max']}")
-    if "rating" in params:
-        parts.append(f"рейтинг: {params['rating']}")
+    if "age_rating" in params:
+        parts.append(f"возрастная категория: {params['age_rating']}")
 
     return ", ".join(parts) if parts else str(params)
 

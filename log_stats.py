@@ -64,15 +64,30 @@ def get_top_queries(limit=5):
 
 
 def get_last_queries(limit=5):
-    """Возвращает последние выполненные запросы.
+    """Возвращает последние уникальные выполненные запросы.
     Параметры:
         limit: Максимальное количество запросов
     Возвращает:
-        list: Список последних запросов, отсортированных по времени
+        list: Список последних уникальных запросов, отсортированных по времени
     """
     if coll is None:
         return []
-    return list(coll.find().sort("timestamp", -1).limit(limit))
+    
+    pipeline = [
+        {"$sort": {"timestamp": -1}},
+        {
+            "$group": {
+                "_id": {"type": "$search_type", "params": "$params"},
+                "timestamp": {"$first": "$timestamp"},
+                "search_type": {"$first": "$search_type"},
+                "params": {"$first": "$params"},
+                "results_count": {"$first": "$results_count"},
+            }
+        },
+        {"$sort": {"timestamp": -1}},
+        {"$limit": limit},
+    ]
+    return list(coll.aggregate(pipeline))
 
 
 def clear_logs():
