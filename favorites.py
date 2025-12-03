@@ -27,13 +27,13 @@ def load_favorites():
         return {"films": []}
 
 
-def add_to_favorites(film_id, title, year=None, rating=None):
+def add_to_favorites(film_id, title, year=None, age_rating=None):
     """Добавляет фильм в избранное.
     Параметры:
         film_id: ID фильма в базе данных
         title: Название фильма
         year: Год выпуска (опционально)
-        rating: Рейтинг (опционально)
+        age_rating: Возрастной рейтинг (опционально)
     Возвращает:
         bool: True если фильм добавлен, False если уже в избранном
     """
@@ -109,8 +109,10 @@ def clear_favorites():
 
 
 def view_favorites():
-    """Показывает все избранные фильмы."""
-    from formatter import print_movies_table, SEPARATOR, SEPARATOR_EQUAL
+    """Показывает все избранные фильмы с возможностью просмотра актёров."""
+    from formatter import print_movies_table, print_actors, SEPARATOR, SEPARATOR_EQUAL, SEPARATOR_MINUS
+    from mysql_connector import get_actors_by_film
+    from input_utils import process_input
     
     print("\n" + SEPARATOR_EQUAL)
     print(f"{' МОИ ИЗБРАННЫЕ ФИЛЬМЫ':^70}")
@@ -142,4 +144,56 @@ def view_favorites():
 
     print_movies_table(films_for_display, show_header=False)  # formatter.py
     print(SEPARATOR)
+    
+    # Интерактивное взаимодействие
+    while True:
+        choice = process_input(  # input_utils.py
+            "\n Введите номер фильма для просмотра актёров или 'q' для выхода: "
+        )
+        
+        if choice.lower() == 'q' or not choice:
+            break
+        
+        try:
+            idx = int(choice)
+            if 1 <= idx <= len(films_for_display):
+                film = films_for_display[idx - 1]
+                actors = get_actors_by_film(film.get("film_id"))  # mysql_connector.py
+                print_actors(actors, film_title=film.get("title"))  # formatter.py
+
+                # Выбор актёра для просмотра его фильмов
+                if actors:
+                    while True:
+                        actor_choice = process_input(  # input_utils.py
+                            "\n Выберите актёра для просмотра фильмов "
+                            "(Enter — отмена): ")
+                        if not actor_choice:
+                            break
+                        try:
+                            actor_idx = int(actor_choice)
+                            if 1 <= actor_idx <= len(actors):
+                                from searches import show_actor_films
+                                selected_actor = actors[actor_idx - 1]
+                                actor_id = selected_actor.get('actor_id')
+                                fn = selected_actor.get('first_name', '').strip().title()
+                                ln = selected_actor.get('last_name', '').strip().title()
+                                actor_name = f"{fn} {ln}"
+                                show_actor_films(actor_id, actor_name)  # searches.py
+                                
+                                # Повторный вывод списка избранного
+                                print("\n" + SEPARATOR_EQUAL)
+                                print(f"{' МОИ ИЗБРАННЫЕ ФИЛЬМЫ':^70}")
+                                print(SEPARATOR_EQUAL + "\n")
+                                print(f" Всего в избранном: {len(favorites)} фильм(ов)\n")
+                                print_movies_table(films_for_display, show_header=False)  # formatter.py
+                                print(SEPARATOR)
+                                break
+                            else:
+                                print(f" Неверный номер — введите число от 1 до {len(actors)}")
+                        except ValueError:
+                            print(" Ожидался номер актёра.")
+            else:
+                print(f"Неверный номер — введите число от 1 до {len(films_for_display)}")
+        except ValueError:
+            print("Ожидался номер фильма.")
 

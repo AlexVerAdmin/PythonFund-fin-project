@@ -91,11 +91,18 @@ def get_last_queries(limit=5):
 
 
 def clear_logs():
-    """Удаляет все документы с логами поисковых запросов из коллекции. 
-    Параметры:
-        int: Число удалённых документов
+    """Удаляет все документы с логами поисковых запросов из коллекции.
+    
+    Возвращает:
+        int: Число удалённых документов, или None если произошла ошибка
     """
     if coll is None:
-        return 0
-    result = coll.delete_many({})
-    return result.deleted_count
+        print("\n MongoDB недоступна. Нечего очищать.\n")
+        return None
+    
+    try:
+        result = coll.delete_many({})
+        return result.deleted_count
+    except Exception as exc:
+        print(f"\n Не удалось очистить логи: {exc}\n")
+        return None

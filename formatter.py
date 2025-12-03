@@ -60,7 +60,7 @@ def print_movies_table(films, offset=0, total=None, show_header=True):
 
         # Форматируем вывод с разделителем между фильмами
         print(f"\n  {i}.   {title} ({year}){fav_marker}")
-        print(f"   Аренда: ${ren} | Покупка: ${rep} | Рейтинг: {rating_desc}")
+        print(f"   Аренда: ${ren} | Покупка: ${rep} | Возрастной рейтинг: {rating_desc}")
 
         if desc:
             # Ограничиваем длину описания для лучшей читаемости

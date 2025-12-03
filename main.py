@@ -51,12 +51,10 @@ def main():
                 "Продолжить? (y/n): "
             )
             if process_yes_no_input(prompt):  # input_utils.py
-                try:
-                    deleted = clear_logs()  # log_stats.py
+                deleted = clear_logs()  # log_stats.py
+                if deleted is not None:
                     print(f"\n Удалено документов: {deleted}")
-                    print(SEPARATOR)
-                except Exception as exc:
-                    print(f"\n Не удалось очистить логи: {exc}")
+                print(SEPARATOR)
             else:
                 print("\n Операция отменена.")
                 print(SEPARATOR)
@@ -80,4 +78,23 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as e:
+        print(f"\n{'='*60}")
+        print(f"{'КРИТИЧЕСКАЯ ОШИБКА':^60}")
+        print(f"{'='*60}")
+        print(f"\n{e}\n")
+        print("Проверьте:")
+        print("  1. Запущен ли сервер MySQL")
+        print("  2. Правильность параметров в .env файле")
+        print("  3. Доступность базы данных Sakila\n")
+    except KeyboardInterrupt:
+        print("\n\nПрограмма прервана пользователем. До встречи!\n")
+    except Exception as e:
+        print(f"\n{'='*60}")
+        print(f"{'НЕПРЕДВИДЕННАЯ ОШИБКА':^60}")
+        print(f"{'='*60}")
+        print(f"\nТип ошибки: {type(e).__name__}")
+        print(f"Описание: {e}\n")
+        print("Пожалуйста, сообщите об этой ошибке разработчику.\n")
