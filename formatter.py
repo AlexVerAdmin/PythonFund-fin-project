@@ -56,7 +56,7 @@ def print_movies_table(films, offset=0, total=None, show_header=True):
 
         # Проверяем, находится ли фильм в избранном
         film_id = film.get("film_id")
-        fav_marker = " " * 10 + "❤" if film_id and is_favorite(film_id) else ""
+        fav_marker = " " * 10 + "❤" if film_id and is_favorite(film_id) else ""  # favorites.py
 
         # Форматируем вывод с разделителем между фильмами
         print(f"\n  {i}.   {title} ({year}){fav_marker}")

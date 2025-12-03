@@ -7,9 +7,9 @@
 
 from log_stats import get_top_queries, get_last_queries, clear_logs
 from formatter import print_stats, SEPARATOR, SEPARATOR_EQUAL
-from searches import handle_keyword_search, handle_genre_search
+from searches import search_by_keyword_interactive, search_by_genre_interactive
 from favorites import view_favorites, clear_favorites
-from input_utils import process_yes_no_input
+from input_utils import process_yes_no_input, process_input
 
 
 def main():
@@ -31,25 +31,28 @@ def main():
         print("  q.  Выход")
         print(SEPARATOR_EQUAL)
 
-        choice = input("\n Выберите опцию: ").strip()
+        choice = process_input("\n Выберите опцию: ")  # input_utils.py
 
         if choice == "1":
-            handle_keyword_search()
+            search_by_keyword_interactive()  # searches.py
 
         elif choice == "2":
-            handle_genre_search()
+            search_by_genre_interactive()  # searches.py
 
         elif choice == "3":
-            top_q = get_top_queries()
-            last_q = get_last_queries()
-            print_stats(top_q, last_q)
+            top_q = get_top_queries()  # log_stats.py
+            last_q = get_last_queries()  # log_stats.py
+            print_stats(top_q, last_q)  # formatter.py
             print(SEPARATOR)
 
         elif choice == "4":
-            if process_yes_no_input(
-                    "\n  Это удалит ВСЕ сохранённые запросы в MongoDB. Продолжить? (y/n): "):
+            prompt = (
+                "\n  Это удалит ВСЕ сохранённые запросы в MongoDB. "
+                "Продолжить? (y/n): "
+            )
+            if process_yes_no_input(prompt):  # input_utils.py
                 try:
-                    deleted = clear_logs()
+                    deleted = clear_logs()  # log_stats.py
                     print(f"\n Удалено документов: {deleted}")
                     print(SEPARATOR)
                 except Exception as exc:
@@ -59,11 +62,11 @@ def main():
                 print(SEPARATOR)
 
         elif choice == "5":
-            view_favorites()
+            view_favorites()  # favorites.py
             print(SEPARATOR)
 
         elif choice == "6":
-            clear_favorites()
+            clear_favorites()  # favorites.py
             print(SEPARATOR)
 
         elif choice.lower() == 'q':

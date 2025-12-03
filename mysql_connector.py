@@ -3,11 +3,19 @@
 """
 
 import pymysql
-from config import MYSQL_HOST, MYSQL_USER, MYSQL_PASS, MYSQL_DB, LIMIT, AGE_RATING_ORDER
+from config import (
+    MYSQL_HOST,
+    MYSQL_USER,
+    MYSQL_PASS,
+    MYSQL_DB,
+    LIMIT,
+    AGE_RATING_ORDER
+)
 
 
 def get_age_ratings_lesser_or_equal(age_rating):
-    """Возвращает список возрастных категорий, включающий `age_rating` и более мягкие.
+    """Возвращает список возрастных категорий, включающий
+    `age_rating` и более мягкие.
     Например, если age_rating="PG-13", вернёт ["G","PG","PG-13"].
     Если категория не найдена — вернёт список из самого значения.
     """
@@ -36,7 +44,8 @@ def get_connection():
     except pymysql.err.OperationalError as exc:
         msg = (
             f"Не удалось подключиться к MySQL ({exc}).\n"
-            "Проверьте наличие сервера MySQL или правильность параметров в .env"
+            "Проверьте наличие сервера MySQL или правильность "
+            "параметров в .env"
         )
         raise RuntimeError(msg) from exc
 
@@ -70,7 +79,10 @@ def get_age_ratings():
 
 def get_year_bounds():
     """Возвращает кортеж `(min_year, max_year)` по данным таблицы `film`."""
-    query = "SELECT MIN(release_year) AS min_year, MAX(release_year) AS max_year FROM film"
+    query = (
+        "SELECT MIN(release_year) AS min_year, "
+        "MAX(release_year) AS max_year FROM film"
+    )
     with get_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(query)
@@ -78,7 +90,13 @@ def get_year_bounds():
             return row.get("min_year"), row.get("max_year")
 
 
-def _build_keyword_query_parts(keyword, genre_id=None, year_min=None, year_max=None, age_rating=None):
+def _build_keyword_query_parts(
+        keyword,
+        genre_id=None,
+        year_min=None,
+        year_max=None,
+        age_rating=None
+):
     """Строит общие части SQL-запроса для поиска по ключевому слову.
     
     Возвращает:
@@ -147,7 +165,12 @@ def search_by_keyword(
             return cursor.fetchall()
 
 
-def _build_genre_year_query_parts(genre_id=None, year_min=None, year_max=None, age_rating=None):
+def _build_genre_year_query_parts(
+        genre_id=None,
+        year_min=None,
+        year_max=None,
+        age_rating=None
+):
     """Строит общие части SQL-запроса для поиска по жанру и/или годам.
     
     Возвращает:
@@ -185,8 +208,12 @@ def search_by_genre_and_year(
         offset=0,
         limit=LIMIT,
         age_rating=None):
-    """Поиск фильмов по жанру и/или диапазону лет с опциональным фильтром `age_rating`."""
-    sql_join, where_sql, params = _build_genre_year_query_parts(genre_id, year_min, year_max, age_rating)
+    """Поиск фильмов по жанру и/или диапазону лет с
+    опциональным фильтром `age_rating`.
+    """
+    sql_join, where_sql, params = _build_genre_year_query_parts(
+        genre_id, year_min, year_max, age_rating
+    )
     
     query = (
         "SELECT DISTINCT f.film_id, f.title, f.description, "
@@ -215,7 +242,10 @@ def get_keyword_count(
     sql_join, where_sql, params = _build_keyword_query_parts(
         keyword, genre_id, year_min, year_max, age_rating)
     
-    query = f"SELECT COUNT(DISTINCT f.film_id) AS cnt FROM film f {sql_join} WHERE {where_sql}"
+    query = (
+        f"SELECT COUNT(DISTINCT f.film_id) AS cnt "
+        f"FROM film f {sql_join} WHERE {where_sql}"
+    )
     
     with get_connection() as conn:
         with conn.cursor() as cursor:

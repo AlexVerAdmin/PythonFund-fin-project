@@ -92,7 +92,7 @@ def clear_favorites():
         print("\n  Список избранного уже пуст.\n")
         return
 
-    if not process_yes_no_input(
+    if not process_yes_no_input(  # input_utils.py
             f"\n  Это удалит ВСЕ {count} фильм(ов) из избранного. Продолжить? (y/n): "):
         print("\n  Операция отменена.\n")
         return
@@ -140,6 +140,6 @@ def view_favorites():
         }
         films_for_display.append(film)
 
-    print_movies_table(films_for_display, show_header=False)
+    print_movies_table(films_for_display, show_header=False)  # formatter.py
     print(SEPARATOR)
 
